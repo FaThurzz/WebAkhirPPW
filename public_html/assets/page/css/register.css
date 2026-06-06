@@ -1,0 +1,129 @@
+/* ══════════════════════════════════════════════
+   ThurzShop — register.css
+   Extends login.css — styles khusus halaman Register
+   ══════════════════════════════════════════════ */
+
+/* ── Form card: sedikit lebih lebar karena lebih banyak field ── */
+.reg-form-card {
+  max-width: 440px;
+}
+
+/* ── Input check icon (✓ / ✗) di kanan field ── */
+.form-input-check {
+  position: absolute;
+  right: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.form-input-check.valid   { color: var(--green); opacity: 1; }
+.form-input-check.invalid { color: #dc2626;      opacity: 1; }
+
+/* Geser input sedikit agar tidak overlap dengan check icon */
+.form-group:has(.form-input-check) .form-input {
+  padding-right: 34px;
+}
+/* Jika ada toggle-pw, check icon tidak dipakai di field tersebut */
+.form-group:has(.toggle-pw) .form-input-check {
+  display: none;
+}
+
+/* ── Password strength indicator ── */
+.pw-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  animation: fadeUp .2s ease;
+}
+.pw-strength-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg3);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.pw-strength-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  width: 0%;
+  transition: width .3s ease, background .3s ease;
+}
+.pw-strength-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Strength levels */
+.pw-strength-fill.weak   { width: 33%; background: #ef4444; }
+.pw-strength-fill.medium { width: 66%; background: var(--orange); }
+.pw-strength-fill.strong { width: 100%; background: var(--green); }
+
+.pw-strength-label.weak   { color: #ef4444; }
+.pw-strength-label.medium { color: var(--orange); }
+.pw-strength-label.strong { color: var(--green); }
+
+/* ── Terms checkbox ── */
+.reg-terms {
+  align-items: flex-start !important;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.reg-terms .login-remember-box {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.reg-terms-link {
+  color: var(--blue);
+  font-weight: 600;
+  transition: opacity .2s;
+}
+.reg-terms-link:hover { opacity: .75; }
+
+/* ── Success state ── */
+.reg-success {
+  text-align: center;
+  padding: 16px 0;
+  animation: fadeUp .4s ease;
+}
+.reg-success-icon {
+  width: 72px; height: 72px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 8px 24px rgba(18, 183, 106, .3);
+  animation: successPop .5s cubic-bezier(.175, .885, .32, 1.275);
+}
+.reg-success h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.reg-success p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+@keyframes successPop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .reg-form-card {
+    max-width: 100%;
+  }
+}
