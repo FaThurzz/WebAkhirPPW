@@ -70,12 +70,6 @@ if ($hour >= 5 && $hour < 12) {
         <div class="section-sub">Find premium accounts for your favorite titles</div>
         <div class="category-count">Total game tersedia: <?php echo mysqli_num_rows($games); ?> kategori</div>
       </div>
-      <a href="pages/marketplace.php" class="view-all">
-        View All Categories
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
-      </a>
     </div>
     <div class="games-grid">
       <?php foreach ($games as $game): ?>

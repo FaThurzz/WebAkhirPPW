@@ -348,7 +348,7 @@ include '../includes/header.php';
           <label class="login-remember reg-terms">
             <input type="checkbox" name="terms" id="terms" required />
             <span class="login-remember-box"></span>
-            <span>Saya menyetujui <a href="#" class="reg-terms-link">Syarat & Ketentuan</a> serta <a href="#" class="reg-terms-link">Kebijakan Privasi</a> ThurzShop</span>
+            <span>Saya menyetujui <a href="other/snk.php" class="reg-terms-link">Syarat & Ketentuan</a> serta <a href="other/privacy.php" class="reg-terms-link">Kebijakan Privasi</a> ThurzShop</span>
           </label>
           <span class="form-error-msg" id="err-terms"></span>
         </div>
