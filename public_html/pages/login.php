@@ -45,7 +45,10 @@ $page_title  = "Login ThurzShop";
 $active_page = "login";
 include '../includes/header.php';
 ?>
-
+<head>
+    <link rel="stylesheet" href="../assets/login/login.css">
+</head>
+<body>
 <div class="login-wrap">
 
   <!-- Left: branding -->
@@ -190,3 +193,4 @@ include '../includes/header.php';
 </div>
 
 <?php include '../includes/footer.php'; ?>
+</body>

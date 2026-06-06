@@ -141,8 +141,8 @@ function formatRp($price) {
 
 include '../includes/header.php';
 ?>
-</head>
 <body>
+  
 
 <!-- ══ PAGE HEADER ══════════════════════════════════════ -->
 <div class="mp-header">
