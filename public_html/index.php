@@ -1,7 +1,7 @@
 <?php
 
 $page_title = "Home ThurzShop";
-$active_page = "dashboard";
+$active_page = "home";
 include 'includes/header.php';
 
 

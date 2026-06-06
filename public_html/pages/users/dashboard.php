@@ -9,7 +9,7 @@ if (!isset($_SESSION['user'])) {
 
 // ── Page config ─────────────────────────────────────────────────────────────
 $page_title  = 'Dashboard Saya — ThurzShop';
-$active_page = 'dashboard';
+$active_page = 'profile';
 
 // ── DB & user ───────────────────────────────────────────────────────────────
 include '../../includes/db.php';

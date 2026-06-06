@@ -190,9 +190,9 @@ $base_url = '/ProjectAkhir/public_html/';
     <a href="<?php echo $base_url; ?>index.php" class="nav-logo">Thurz<span>Shop</span></a>
     <ul class="nav-links">
       <li><a href="<?php echo $base_url; ?>index.php" 
-             class="<?php echo (isset($active_page) && $active_page == 'dashboard') ? 'active' : ''; ?>">Dashboard</a></li>
-      <li><a href="#"
-             class="<?php echo (isset($active_page) && $active_page == 'cektransaksi') ? 'active' : ''; ?>">Cek Transaksi</a></li>
+             class="<?php echo (isset($active_page) && $active_page == 'home') ? 'active' : ''; ?>">Home</a></li>
+      <li><a href="<?php echo $base_url; ?>pages/users/dashboard.php"
+             class="<?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">Profile</a></li>
       <li><a href="#"
              class="<?php echo (isset($active_page) && $active_page == 'review') ? 'active' : ''; ?>">Reviews</a></li>
     </ul>
