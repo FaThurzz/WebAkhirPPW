@@ -27,6 +27,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state === 'none')    { el.textContent = ''; }
   }
 
+  /* ── Nama Lengkap: live validation ──────────── */
+  const fullNameInput = document.getElementById('full_name');
+  fullNameInput?.addEventListener('input', () => {
+    const val = fullNameInput.value.trim();
+    clearError('group-full_name');
+    if (!val) {
+      setCheck('check-full_name', 'none');
+    } else if (val.length < 3) {
+      setError('group-full_name', 'err-full_name', 'Minimal 3 karakter.');
+      setCheck('check-full_name', 'invalid');
+    } else {
+      setCheck('check-full_name', 'valid');
+    }
+  });
+
+  /* ── Nomor Telepon: live validation ──────────── */
+  const phoneInput = document.getElementById('phone_number');
+  phoneInput?.addEventListener('input', () => {
+    const val = phoneInput.value.trim();
+    clearError('group-phone_number');
+    if (!val) {
+      setCheck('check-phone_number', 'none');
+    } else if (!/^[0-9+\-\s]{8,15}$/.test(val)) {
+      setError('group-phone_number', 'err-phone_number', 'Format nomor telepon tidak valid.');
+      setCheck('check-phone_number', 'invalid');
+    } else {
+      setCheck('check-phone_number', 'valid');
+    }
+  });
+
   /* ── Username: live validation ───────────────── */
   const usernameInput = document.getElementById('username');
   usernameInput?.addEventListener('input', () => {
@@ -149,6 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
     registerForm.addEventListener('submit', (e) => {
       let valid = true;
 
+      const fullName    = fullNameInput?.value.trim()     ?? '';
+      const phone       = phoneInput?.value.trim()         ?? '';
       const username = usernameInput?.value.trim()    ?? '';
       const email    = emailInput?.value.trim()        ?? '';
       const password = passwordInput?.value            ?? '';
@@ -156,9 +188,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const terms    = document.getElementById('terms')?.checked;
 
       // Reset semua error
-      ['group-username','group-email','group-password','group-password2','group-terms']
+      ['group-full_name','group-phone_number','group-username','group-email','group-password','group-password2','group-terms']
         .forEach(id => clearError(id));
 
+      if (!fullName || fullName.length < 3) {
+        setError('group-full_name', 'err-full_name', fullName ? 'Minimal 3 karakter.' : 'Nama lengkap tidak boleh kosong.');
+        valid = false;
+      }
+      if (!phone || !/^[0-9+\-\s]{8,15}$/.test(phone)) {
+        setError('group-phone_number', 'err-phone_number', phone ? 'Format nomor telepon tidak valid.' : 'Nomor telepon tidak boleh kosong.');
+        valid = false;
+      }
       if (!username || username.length < 3 || !/^[a-zA-Z0-9_]+$/.test(username)) {
         setError('group-username', 'err-username', username ? 'Username tidak valid.' : 'Username tidak boleh kosong.');
         valid = false;

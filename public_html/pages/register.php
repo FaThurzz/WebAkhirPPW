@@ -13,12 +13,26 @@ $errors  = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username  = trim($_POST['username']  ?? '');
-    $email     = trim($_POST['email']     ?? '');
-    $password  = $_POST['password']       ?? '';
-    $password2 = $_POST['password2']      ?? '';
+    $username     = trim($_POST['username']     ?? '');
+    $email        = trim($_POST['email']        ?? '');
+    $password     = $_POST['password']          ?? '';
+    $password2    = $_POST['password2']         ?? '';
+    $full_name    = trim($_POST['full_name']    ?? '');
+    $phone_number = trim($_POST['phone_number'] ?? '');
 
     // Validasi
+    if (empty($full_name)) {
+        $errors['full_name'] = 'Nama lengkap tidak boleh kosong.';
+    } elseif (strlen($full_name) < 3) {
+        $errors['full_name'] = 'Nama lengkap minimal 3 karakter.';
+    }
+
+    if (empty($phone_number)) {
+        $errors['phone_number'] = 'Nomor telepon tidak boleh kosong.';
+    } elseif (!preg_match('/^[0-9+\-\s]{8,15}$/', $phone_number)) {
+        $errors['phone_number'] = 'Format nomor telepon tidak valid.';
+    }
+
     if (empty($username)) {
         $errors['username'] = 'Username tidak boleh kosong.';
     } elseif (strlen($username) < 3) {
@@ -47,21 +61,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Cek duplikat username / email
     if (empty($errors)) {
-        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT ID_User FROM users WHERE username = ? OR email = ? LIMIT 1");
         $stmt->bind_param('ss', $username, $email);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows > 0) {
             // Cek mana yang duplikat
-            $stmtU = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+            $stmtU = $conn->prepare("SELECT ID_User FROM users WHERE username = ? LIMIT 1");
             $stmtU->bind_param('s', $username);
             $stmtU->execute();
             $stmtU->store_result();
             if ($stmtU->num_rows > 0) $errors['username'] = 'Username sudah digunakan.';
             $stmtU->close();
 
-            $stmtE = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+            $stmtE = $conn->prepare("SELECT ID_User FROM users WHERE email = ? LIMIT 1");
             $stmtE->bind_param('s', $email);
             $stmtE->execute();
             $stmtE->store_result();
@@ -75,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         $role   = 'user';
-        $stmt   = $conn->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param('ssss', $username, $email, $hashed, $role);
+        $stmt   = $conn->prepare("INSERT INTO users (username, email, password, full_name, phone_number, role) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('ssssss', $username, $email, $hashed, $full_name, $phone_number, $role);
 
         if ($stmt->execute()) {
             $success = true;
@@ -193,6 +207,43 @@ include '../includes/header.php';
 
       <form method="POST" action="register.php" class="login-form" id="registerForm" novalidate>
 
+        <!-- Nama Lengkap -->
+        <div class="form-group <?php echo isset($errors['full_name']) ? 'has-error' : ''; ?>" id="group-full_name">
+          <label class="form-label" for="full_name">Nama Lengkap</label>
+          <div class="form-input-wrap">
+            <svg class="form-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input type="text" id="full_name" name="full_name" class="form-input"
+              placeholder="Contoh: John Smith"
+              value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>"
+              autocomplete="name" required />
+            <span class="form-input-check" id="check-full_name"></span>
+          </div>
+          <span class="form-error-msg" id="err-full_name">
+            <?php echo htmlspecialchars($errors['full_name'] ?? ''); ?>
+          </span>
+        </div>
+
+        <!-- Nomor Telepon -->
+        <div class="form-group <?php echo isset($errors['phone_number']) ? 'has-error' : ''; ?>" id="group-phone_number">
+          <label class="form-label" for="phone_number">Nomor Telepon</label>
+          <div class="form-input-wrap">
+            <svg class="form-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l1.62-1.62a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <input type="tel" id="phone_number" name="phone_number" class="form-input"
+              placeholder="Contoh: 08123456789"
+              value="<?php echo htmlspecialchars($_POST['phone_number'] ?? ''); ?>"
+              autocomplete="tel" required />
+            <span class="form-input-check" id="check-phone_number"></span>
+          </div>
+          <span class="form-error-msg" id="err-phone_number">
+            <?php echo htmlspecialchars($errors['phone_number'] ?? ''); ?>
+          </span>
+        </div>
+
         <!-- Username -->
         <div class="form-group <?php echo isset($errors['username']) ? 'has-error' : ''; ?>" id="group-username">
           <label class="form-label" for="username">Username</label>
@@ -200,9 +251,9 @@ include '../includes/header.php';
             <svg class="form-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
-            </svg>
+            </svg>  
             <input type="text" id="username" name="username" class="form-input"
-              placeholder="Contoh: Fathur"
+              placeholder="Contoh: John"
               value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>"
               autocomplete="username" required />
             <span class="form-input-check" id="check-username"></span>
