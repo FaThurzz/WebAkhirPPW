@@ -99,69 +99,7 @@ h3 {
   font-family: 'Rowdies', sans-serif;
 }
 
-/* ── NAVBAR ─────────────────────────────────── */
-nav {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-}
-.nav-inner {
-  max-width: var(--container); margin: 0 auto;
-  display: flex; align-items: center; gap: var(--space-4);
-  padding: 0 var(--gutter); height: 60px;
-}
-.nav-logo {
-  font-size: 18px; font-weight: 800;
-  color: var(--blue); letter-spacing: -.5px;
-  flex-shrink: 0;
-}
-.nav-logo span { color: var(--text); }
-
-.nav-links { display: flex; gap: 4px; list-style: none; }
-.nav-links a {
-  padding: 6px 14px; border-radius: var(--radius);
-  font-size: 14px; font-weight: 500; color: var(--muted);
-  transition: color .2s, background .2s;
-}
-.nav-links a:hover,
-.nav-links a.active { color: var(--text); background: var(--bg2); }
-.nav-links a.active  { color: var(--blue); }
-
-.nav-right {
-  margin-left: auto; display: flex; align-items: center; gap: 12px;
-}
-
-.search-box {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 7px 14px;
-  transition: border-color .2s, box-shadow .2s;
-}
-.search-box:focus-within {
-  border-color: var(--blue);
-  box-shadow: var(--shadow);
-}
-.search-box svg { color: var(--muted); flex-shrink: 0; }
-.search-box input {
-  border: none; background: none; outline: none;
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px; color: var(--text); width: 160px;
-}
-.search-box input::placeholder { color: var(--muted); }
-
-.nav-icon {
-  width: 36px; height: 36px; border-radius: var(--radius);
-  display: flex; align-items: center; justify-content: center;
-  background: var(--white); color: var(--muted); cursor: pointer;
-  border: 1px solid var(--border); transition: background .2s, box-shadow .2s;
-}
-.nav-icon:hover {
-  background: var(--bg2);
-  box-shadow: var(--shadow);
-}
+/* Navbar CSS → dipindahkan ke header.php */
 
 /* ── BUTTONS ─────────────────────────────────── */
 .btn {
@@ -455,52 +393,7 @@ nav {
 .cta-text h2 { color: #fff; margin-bottom: 10px; }
 .cta-text p  { font-size: 16px; color: rgba(255,255,255,.75); max-width: 380px; }
 
-/* ── FOOTER ──────────────────────────────────── */
-footer {
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  padding: var(--space-6) var(--gutter) var(--space-4);
-}
-.footer-inner { max-width: var(--container); margin: 0 auto; }
-.footer-grid {
-  display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
-  gap: var(--space-5); margin-bottom: var(--space-5);
-}
-.footer-brand .nav-logo { font-size: 20px; margin-bottom: 10px; display: inline-block; }
-.footer-brand p { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 220px; }
-.footer-col h4 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
-.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.footer-col ul a { font-size: 13px; color: var(--muted); transition: color .2s; }
-.footer-col ul a:hover { color: var(--blue); }
-.footer-support { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-
-.footer-support-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 9px 16px;
-  font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer;
-  font-family: 'Outfit', sans-serif;
-  transition: all .2s; width: 100%; justify-content: center;
-}
-.footer-support-btn:hover { border-color: var(--blue); color: var(--blue); }
-
-.footer-social { display: flex; gap: 10px; margin-top: 14px; }
-.social-btn {
-  width: 36px; height: 36px; border-radius: var(--radius);
-  background: var(--white); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all .2s; color: var(--muted);
-}
-.social-btn:hover { border-color: var(--blue); color: var(--blue); }
-
-.footer-bottom {
-  border-top: 1px solid var(--border); padding-top: var(--space-3);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.footer-copy { font-size: 12px; color: var(--muted); }
-.footer-links { display: flex; gap: 20px; }
-.footer-links a { font-size: 12px; color: var(--muted); transition: color .2s; }
-.footer-links a:hover { color: var(--blue); }
+/* Footer CSS → dipindahkan ke footer.php */
 
 /* ── ANIMATIONS ──────────────────────────────── */
 @keyframes fadeUp {
@@ -528,8 +421,7 @@ footer {
   .footer-grid  { grid-template-columns: 1fr 1fr; }
   .cta-inner    { flex-direction: column; text-align: center; padding: var(--space-4) var(--space-3); }
   .deal-list    { flex-direction: column; }
-  .nav-links,
-  .search-box   { display: none; }
+  /* .nav-links & .search-box responsive → dipindahkan ke header.php */
 }
 @media (max-width: 480px) {
   .footer-grid  { grid-template-columns: 1fr; }

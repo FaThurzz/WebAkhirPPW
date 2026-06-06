@@ -62,6 +62,95 @@ $currentYear = date("Y");
   </div>
 </footer>
 
+<style>
+  /* ── FOOTER ──────────────────────────────────── */
+  footer {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: var(--space-6) var(--gutter) var(--space-4);
+  }
+  .footer-inner { max-width: var(--container); margin: 0 auto; }
+  .footer-grid {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: var(--space-5); margin-bottom: var(--space-5);
+  }
+  .footer-brand .nav-logo { font-size: 20px; margin-bottom: 10px; display: inline-block; }
+  .footer-brand p { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 220px; }
+  .footer-col h4 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col ul a { font-size: 13px; color: var(--muted); transition: color .2s; }
+  .footer-col ul a:hover { color: var(--blue); }
+  .footer-support { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+
+  .footer-support-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 9px 16px;
+    font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: all .2s; width: 100%; justify-content: center;
+  }
+  .footer-support-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+  .footer-social { display: flex; gap: 10px; margin-top: 14px; }
+  .social-btn {
+    width: 36px; height: 36px; border-radius: var(--radius);
+    background: var(--white); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .2s; color: var(--muted);
+  }
+  .social-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border); padding-top: var(--space-3);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-copy { font-size: 12px; color: var(--muted); }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-links a { font-size: 12px; color: var(--muted); transition: color .2s; }
+  .footer-links a:hover { color: var(--blue); }
+
+  @media (max-width: 768px) {
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
 <script src="<?php echo $base_url; ?>assets/main.js"></script>
+
+<script>
+/* ── Toast notification helper ───────────────── */
+window.showToast = (message, type = 'info') => {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+
+  if (!document.getElementById('toast-style')) {
+    const toastStyle = document.createElement('style');
+    toastStyle.id = 'toast-style';
+    toastStyle.textContent = `
+      .toast {
+        position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+        padding: 12px 20px; border-radius: 10px;
+        font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+        box-shadow: 0 8px 32px rgba(0,0,0,.15);
+        animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
+        max-width: 320px;
+      }
+      .toast-info    { background: var(--blue);  color: #fff; }
+      .toast-success { background: var(--green); color: #fff; }
+      .toast-error   { background: #ef4444;      color: #fff; }
+      @keyframes toastIn  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(10px); } }
+    `;
+    document.head.appendChild(toastStyle);
+  }
+
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+};
+</script>
 </body>
 </html>

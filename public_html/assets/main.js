@@ -1,61 +1,10 @@
 /* ══════════════════════════════════════════════
-   ThurzShop — index.js
+   ThurzShop — main.js
    JS khusus halaman Index / Home
+   (Navbar JS → header.php | Toast JS → footer.php)
    ══════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
-
-  /* ── Navbar: highlight active link on scroll ── */
-  const sections = document.querySelectorAll('section[id], div[id]');
-  const navLinks = document.querySelectorAll('.nav-links a');
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        navLinks.forEach(link => {
-          link.classList.toggle(
-            'active',
-            link.getAttribute('href') === `#${entry.target.id}`
-          );
-        });
-      }
-    });
-  }, { threshold: 0.4 });
-
-  sections.forEach(sec => observer.observe(sec));
-
-  /* ── Navbar: sticky shadow on scroll ─────────── */
-  const nav = document.querySelector('nav');
-  window.addEventListener('scroll', () => {
-    nav.style.boxShadow = window.scrollY > 10
-      ? '0 2px 20px rgba(0,0,0,.08)'
-      : 'none';
-  });
-
-  /* ── Search bar: focus effect ────────────────── */
-  const searchInput = document.querySelector('.search-box input');
-  const searchBox   = document.querySelector('.search-box');
-
-  if (searchInput && searchBox) {
-    searchInput.addEventListener('focus', () => {
-      searchBox.style.borderColor = 'var(--blue)';
-      searchBox.style.boxShadow   = '0 0 0 3px rgba(26,86,255,.12)';
-    });
-    searchInput.addEventListener('blur', () => {
-      searchBox.style.borderColor = '';
-      searchBox.style.boxShadow   = '';
-    });
-
-    /* ── Search: Enter key → go to marketplace ── */
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const query = searchInput.value.trim();
-        if (query) {
-          window.location.href = `pages/marketplace.php?q=${encodeURIComponent(query)}`;
-        }
-      }
-    });
-  }
 
   /* ── Game cards: click → marketplace filter ─── */
   document.querySelectorAll('.game-card').forEach(card => {
@@ -107,48 +56,5 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { threshold: 0.1 });
 
   revealEls.forEach(el => revealObserver.observe(el));
-
-  /* ── Mobile menu toggle ──────────────────────── */
-  const menuToggle = document.getElementById('menu-toggle');
-  const mobileMenu = document.getElementById('mobile-menu');
-
-  if (menuToggle && mobileMenu) {
-    menuToggle.addEventListener('click', () => {
-      const isOpen = mobileMenu.style.display === 'flex';
-      mobileMenu.style.display = isOpen ? 'none' : 'flex';
-      menuToggle.setAttribute('aria-expanded', String(!isOpen));
-    });
-  }
-
-  /* ── Toast notification helper ───────────────── */
-  window.showToast = (message, type = 'info') => {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-
-    if (!document.getElementById('toast-style')) {
-      const toastStyle = document.createElement('style');
-      toastStyle.id = 'toast-style';
-      toastStyle.textContent = `
-        .toast {
-          position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-          padding: 12px 20px; border-radius: 10px;
-          font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
-          box-shadow: 0 8px 32px rgba(0,0,0,.15);
-          animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
-          max-width: 320px;
-        }
-        .toast-info    { background: var(--blue);  color: #fff; }
-        .toast-success { background: var(--green); color: #fff; }
-        .toast-error   { background: #ef4444;      color: #fff; }
-        @keyframes toastIn  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(10px); } }
-      `;
-      document.head.appendChild(toastStyle);
-    }
-
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-  };
 
 });
