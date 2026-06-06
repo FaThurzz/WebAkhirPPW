@@ -92,8 +92,8 @@ $page_title  = 'Daftar — ThurzShop';
 $active_page = 'register';
 include '../includes/header.php';
 ?>
-<link rel="stylesheet" href="../assets/login/login.css">
-<link rel="stylesheet" href="../assets/register.css">
+<link rel="stylesheet" href="../assets/page/css/login.css">
+<link rel="stylesheet" href="../assets/page/css/register.css">
 
 <div class="login-wrap">
 
@@ -202,7 +202,7 @@ include '../includes/header.php';
               <circle cx="12" cy="7" r="4"/>
             </svg>
             <input type="text" id="username" name="username" class="form-input"
-              placeholder="Contoh: thurzgamer99"
+              placeholder="Contoh: Fathur"
               value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>"
               autocomplete="username" required />
             <span class="form-input-check" id="check-username"></span>
@@ -221,7 +221,7 @@ include '../includes/header.php';
               <polyline points="22,6 12,13 2,6"/>
             </svg>
             <input type="email" id="email" name="email" class="form-input"
-              placeholder="email@kamu.com"
+              placeholder="email@gmail.com"
               value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
               autocomplete="email" required />
             <span class="form-input-check" id="check-email"></span>
@@ -327,4 +327,5 @@ include '../includes/header.php';
 </div>
 
 <?php include '../includes/footer.php'; ?>
+<script src="../assets/page/js/register.js"></script>
 </body>
