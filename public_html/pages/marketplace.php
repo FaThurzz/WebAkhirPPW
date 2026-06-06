@@ -141,6 +141,9 @@ function formatRp($price) {
 
 include '../includes/header.php';
 ?>
+<head>
+  <link rel="stylesheet" href="../assets/page/marketplace.css">
+</head>
 <body>
   
 
@@ -363,5 +366,6 @@ include '../includes/header.php';
 <?php
 include '../includes/footer.php';
 ?>
+<script src="../assets/page/js/marketplace.js"></script>
 </body>
 </html>

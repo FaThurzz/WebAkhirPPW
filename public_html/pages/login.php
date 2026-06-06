@@ -46,7 +46,7 @@ $active_page = "login";
 include '../includes/header.php';
 ?>
 <head>
-    <link rel="stylesheet" href="../assets/login/login.css">
+    <link rel="stylesheet" href="../assets/page/css/login.css">
 </head>
 <body>
 <div class="login-wrap">
@@ -193,4 +193,5 @@ include '../includes/header.php';
 </div>
 
 <?php include '../includes/footer.php'; ?>
+<script src="../assets/page/js/login.js"></script>
 </body>

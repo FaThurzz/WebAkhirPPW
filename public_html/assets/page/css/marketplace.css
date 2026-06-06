@@ -1,0 +1,272 @@
+/* ══════════════════════════════════════════════
+   ThurzShop — marketplace.css
+   Styles khusus halaman Marketplace
+   ══════════════════════════════════════════════ */
+
+/* ── Page layout ─────────────────────────── */
+.mp-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 28px var(--gutter);
+}
+.mp-header-inner {
+  max-width: var(--container); margin: 0 auto;
+  display: flex; justify-content: space-between;
+  align-items: flex-end; gap: 16px; flex-wrap: wrap;
+}
+.mp-header h2 { margin-bottom: 4px; }
+.mp-header-sub { font-size: 14px; color: var(--muted); }
+
+.mp-body {
+  max-width: var(--container); margin: 0 auto;
+  padding: var(--space-4) var(--gutter);
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* ── Sidebar / Filter ───────────────────── */
+.filter-sidebar {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  position: sticky; top: 76px;
+}
+.filter-title {
+  font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin-bottom: var(--space-2);
+}
+.filter-group { margin-bottom: var(--space-3); }
+.filter-group-label {
+  font-size: 13px; font-weight: 600;
+  color: var(--text); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.filter-game-list { display: flex; flex-direction: column; gap: 2px; }
+.filter-game-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500; color: var(--muted);
+  cursor: pointer; border: none; background: none;
+  font-family: 'Outfit', sans-serif;
+  transition: background .15s, color .15s;
+  text-align: left; width: 100%;
+}
+.filter-game-btn:hover   { background: var(--bg2); color: var(--text); }
+.filter-game-btn.active  { background: var(--blue-lt); color: var(--blue); font-weight: 600; }
+.filter-game-count {
+  font-size: 11px; font-weight: 600;
+  background: var(--bg2); color: var(--muted);
+  padding: 2px 7px; border-radius: var(--radius-full);
+}
+.filter-game-btn.active .filter-game-count {
+  background: var(--blue-lt); color: var(--blue);
+}
+.filter-divider {
+  border: none; border-top: 1px solid var(--border);
+  margin: var(--space-2) 0;
+}
+
+/* Price range inputs */
+.price-range {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.price-input {
+  flex: 1; padding: 7px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif; font-size: 13px; color: var(--text);
+  background: var(--white); outline: none;
+  transition: border-color .2s;
+}
+.price-input:focus { border-color: var(--blue); }
+.price-dash { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+
+.filter-apply-btn {
+  width: 100%; padding: 9px;
+  background: var(--blue); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; margin-top: 4px;
+  transition: background .2s;
+}
+.filter-apply-btn:hover { background: var(--blue-dk); }
+
+.filter-reset {
+  display: block; text-align: center;
+  font-size: 12px; color: var(--muted);
+  margin-top: 10px; cursor: pointer;
+  transition: color .2s;
+}
+.filter-reset:hover { color: var(--blue); }
+
+/* ── Toolbar (sort + count) ─────────────── */
+.mp-toolbar {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: var(--space-3);
+  flex-wrap: wrap; gap: 12px;
+}
+.mp-result-count {
+  font-size: 14px; color: var(--muted);
+}
+.mp-result-count strong { color: var(--text); }
+
+.sort-select {
+  padding: 7px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px; color: var(--text);
+  background: var(--white); outline: none; cursor: pointer;
+  transition: border-color .2s;
+}
+.sort-select:focus { border-color: var(--blue); }
+
+/* ── Active filter chips ────────────────── */
+.active-filters {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: var(--space-2);
+}
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--blue-lt); color: var(--blue);
+  font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: var(--radius-full);
+}
+.filter-chip-remove {
+  cursor: pointer; font-size: 14px; line-height: 1;
+  opacity: .7; transition: opacity .2s;
+}
+.filter-chip-remove:hover { opacity: 1; }
+
+/* ── Listing grid ───────────────────────── */
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.listing-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden; cursor: pointer;
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+  display: flex; flex-direction: column;
+}
+.listing-card:hover {
+  border-color: var(--blue);
+  box-shadow: var(--shadow);
+  transform: translateY(-4px);
+}
+
+.listing-card-img {
+  width: 100%; aspect-ratio: 16/9;
+  object-fit: cover; background: var(--bg2);
+  display: block;
+}
+.listing-card-img-placeholder {
+  width: 100%; aspect-ratio: 16/9;
+  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+}
+
+.listing-card-body {
+  padding: 14px 16px;
+  flex: 1; display: flex; flex-direction: column; gap: 8px;
+}
+.listing-card-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.listing-card-game {
+  font-size: 11px; font-weight: 700;
+  color: var(--blue); letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.listing-card-title {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  line-height: 1.4; margin-top: 2px;
+}
+
+/* Status badges */
+.badge {
+  font-size: 10px; font-weight: 700; letter-spacing: .03em;
+  padding: 3px 8px; border-radius: var(--radius-sm);
+  text-transform: uppercase; flex-shrink: 0;
+}
+.badge-verified { background: rgba(18,183,106,.1); color: var(--green); }
+.badge-hot      { background: rgba(146,71,0,.1);   color: var(--orange); }
+.badge-new      { background: var(--blue-lt);      color: var(--blue); }
+
+.listing-meta {
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.listing-meta-item {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--muted);
+}
+.listing-meta-item svg { flex-shrink: 0; color: var(--muted); }
+
+.listing-card-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.listing-price {
+  font-size: 20px; font-weight: 700; color: var(--text);
+}
+.listing-buy-btn {
+  padding: 7px 16px; border-radius: var(--radius);
+  background: var(--blue); color: #fff;
+  font-size: 13px; font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  border: none; cursor: pointer;
+  transition: background .2s;
+}
+.listing-buy-btn:hover { background: var(--blue-dk); }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: var(--space-8) var(--space-4);
+  grid-column: 1 / -1;
+}
+.empty-icon { font-size: 48px; margin-bottom: var(--space-2); }
+.empty-state h3 { margin-bottom: 8px; }
+.empty-state p  { font-size: 14px; color: var(--muted); }
+
+/* ── Mobile filter toggle btn ───────────── */
+.filter-toggle-btn {
+  display: none;
+  align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--white);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 600; color: var(--text);
+  cursor: pointer; margin-bottom: var(--space-2);
+}
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media (max-width: 1024px) {
+  .listing-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .filter-toggle-btn { display: inline-flex; }
+  .mp-body {
+    grid-template-columns: 1fr;
+  }
+  .filter-sidebar {
+    position: static;
+    display: none;
+  }
+  .filter-sidebar.open { display: block; }
+  .listing-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .listing-grid { grid-template-columns: 1fr; }
+}

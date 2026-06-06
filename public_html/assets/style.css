@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   ThurzShop Marketplace — style.css
+   ThurzShop — style.css  (Global / Index)
    Design System: Stark Integrity
    ══════════════════════════════════════════════ */
 
@@ -8,39 +8,38 @@
 :root {
   /* ── Surfaces ─────────────────────────────── */
   --white:                  #ffffff;
-  --bg:                     #f7f9fb;   /* surface / background */
-  --bg2:                    #f2f4f6;   /* surface-container-low */
-  --bg3:                    #eceef0;   /* surface-container */
-  --border:                 #e2e8f0;   /* outline-variant refined */
-  --border-strong:          #c2c6d6;   /* outline-variant */
-  --card-bg:                #ffffff;   /* surface-container-lowest */
+  --bg:                     #f7f9fb;
+  --bg2:                    #f2f4f6;
+  --bg3:                    #eceef0;
+  --border:                 #e2e8f0;
+  --border-strong:          #c2c6d6;
+  --card-bg:                #ffffff;
 
   /* ── Text ────────────────────────────────── */
-  --text:                   #191c1e;   /* on-surface */
-  --muted:                  #424754;   /* on-surface-variant */
+  --text:                   #191c1e;
+  --muted:                  #424754;
 
   /* ── Brand / Primary ─────────────────────── */
-  --blue:                   #0058be;   /* primary */
-  --blue-dk:                #004395;   /* on-primary-fixed-variant */
-  --blue-lt:                #d8e2ff;   /* primary-fixed */
-  --blue-container:         #2170e4;   /* primary-container */
+  --blue:                   #0058be;
+  --blue-dk:                #004395;
+  --blue-lt:                #d8e2ff;
+  --blue-container:         #2170e4;
 
   /* ── Semantic ────────────────────────────── */
   --green:                  #12b76a;
-  --orange:                 #924700;   /* tertiary */
+  --orange:                 #924700;
 
   /* ── Elevation / Shadow ──────────────────── */
-  /* Level 1 — cards: border only, no shadow    */
-  --shadow:                 0px 4px 12px rgba(0, 0, 0, 0.05);   /* Level 2 hover */
-  --shadow-lg:              0px 20px 25px rgba(0, 0, 0, 0.10);  /* Level 3 modal */
+  --shadow:                 0px 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg:              0px 20px 25px rgba(0, 0, 0, 0.10);
 
   /* ── Shape ───────────────────────────────── */
-  --radius-sm:              0.25rem;   /* 4px  — chips / badges */
-  --radius:                 0.5rem;    /* 8px  — standard elements */
-  --radius-md:              0.75rem;   /* 12px — cards */
-  --radius-lg:              1rem;      /* 16px — large containers */
-  --radius-xl:              1.5rem;    /* 24px — sections */
-  --radius-full:            9999px;    /* pills */
+  --radius-sm:              0.25rem;
+  --radius:                 0.5rem;
+  --radius-md:              0.75rem;
+  --radius-lg:              1rem;
+  --radius-xl:              1.5rem;
+  --radius-full:            9999px;
 
   /* ── Spacing (8px base scale) ────────────── */
   --space-1:  8px;
@@ -62,7 +61,7 @@ body {
   font-family: 'Outfit', sans-serif;
   background: var(--bg);
   color: var(--text);
-  font-size: 16px;        /* body-md */
+  font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -70,7 +69,7 @@ body {
 a  { text-decoration: none; color: inherit; }
 img { display: block; max-width: 100%; }
 
-/* ── Typography scale (from DESIGN.md) ─────── */
+/* ── Typography scale ─────────────────────── */
 h1 {
   font-family: 'Outfit', sans-serif;
   font-size: clamp(32px, 4vw, 48px);
@@ -95,7 +94,7 @@ h3 {
   color: var(--text);
 }
 
-/* Logo — tetap Rowdies sesuai brand ThurzShop */
+/* Logo */
 .nav-logo, .store-name {
   font-family: 'Rowdies', sans-serif;
 }
@@ -133,7 +132,6 @@ nav {
   margin-left: auto; display: flex; align-items: center; gap: 12px;
 }
 
-/* Search — Level 1 elevation: border, no shadow */
 .search-box {
   display: flex; align-items: center; gap: 8px;
   background: var(--white);
@@ -166,7 +164,6 @@ nav {
 }
 
 /* ── BUTTONS ─────────────────────────────────── */
-/* Primary — solid blue, white text. No gradients. */
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
   border: none; cursor: pointer;
@@ -184,8 +181,6 @@ nav {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(0, 88, 190, .3);
 }
-
-/* Secondary — white fill, 1px border, slate text */
 .btn-outline {
   background: var(--white); color: var(--text);
   padding: 8px 20px; font-size: 14px;
@@ -251,7 +246,7 @@ nav {
 .hero h1 { margin-bottom: var(--space-2); }
 
 .hero p {
-  font-size: 18px;          /* body-lg */
+  font-size: 18px;
   color: var(--muted);
   max-width: 440px;
   margin-bottom: var(--space-4);
@@ -259,7 +254,6 @@ nav {
 }
 .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
 
-/* Hero card — Level 3 shadow */
 .hero-card {
   background: linear-gradient(135deg, #1a2a5e 0%, #0d1b3e 100%);
   border-radius: var(--radius-xl); overflow: hidden;
@@ -276,7 +270,6 @@ nav {
   letter-spacing: 1.5px; text-transform: uppercase;
 }
 
-/* Secure badge — Level 2 */
 .secure-badge {
   position: absolute; bottom: 16px; left: 16px; z-index: 2;
   background: rgba(255, 255, 255, .97);
@@ -303,13 +296,13 @@ nav {
 }
 .section-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 24px;          /* headline-md */
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text);
 }
 .section-sub {
-  font-size: 14px;          /* body-sm */
+  font-size: 14px;
   color: var(--muted); margin-top: 4px;
 }
 
@@ -326,7 +319,6 @@ nav {
   gap: 12px;
 }
 
-/* Account card — Level 1: border, no shadow */
 .game-card {
   background: var(--white);
   border: 1px solid var(--border);
@@ -334,7 +326,6 @@ nav {
   padding: 20px 12px; text-align: center; cursor: pointer;
   transition: border-color .2s, box-shadow .2s, transform .2s;
 }
-/* Hover → Level 2: subtle shadow + blue border */
 .game-card:hover {
   border-color: var(--blue);
   transform: translateY(-3px);
@@ -369,7 +360,6 @@ nav {
   background: linear-gradient(to top, rgba(0,0,0,.85) 0%, transparent 100%);
 }
 
-/* Status chip — sm radius (4px), tinted bg */
 .deal-tag {
   display: inline-block; background: var(--blue);
   color: #fff; font-size: 10px; font-weight: 700;
@@ -387,7 +377,6 @@ nav {
 .deal-price-main { font-size: 22px; font-weight: 700; color: #fff; }
 .deal-price-old  { font-size: 14px; color: rgba(255,255,255,.45); text-decoration: line-through; }
 
-/* Side deal cards — Level 1 */
 .deal-list { display: flex; flex-direction: column; gap: 12px; }
 .deal-card {
   background: var(--white);
@@ -409,7 +398,6 @@ nav {
   justify-content: center; font-size: 18px;
 }
 
-/* Status chips — tinted bg, high-contrast text */
 .badge-verified {
   background: rgba(18, 183, 106, .1); color: var(--green);
   font-size: 10px; font-weight: 700; padding: 3px 8px;
@@ -446,7 +434,6 @@ nav {
 .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
 .trust-card { text-align: center; }
 
-/* Trust icon — Level 1 card style */
 .trust-icon {
   width: 56px; height: 56px; background: var(--white);
   border: 1px solid var(--border); border-radius: var(--radius-md);
@@ -460,7 +447,7 @@ nav {
 .cta-section { padding: var(--space-7) var(--gutter); }
 .cta-inner {
   max-width: var(--container); margin: 0 auto;
-  background: var(--blue);   /* solid — no gradients per design system */
+  background: var(--blue);
   border-radius: var(--radius-xl);
   padding: var(--space-6) 56px;
   display: flex; justify-content: space-between; align-items: center; gap: var(--space-3);
@@ -487,7 +474,6 @@ footer {
 .footer-col ul a:hover { color: var(--blue); }
 .footer-support { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
 
-/* Secondary button style for footer */
 .footer-support-btn {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--white); border: 1px solid var(--border);
@@ -516,254 +502,6 @@ footer {
 .footer-links a { font-size: 12px; color: var(--muted); transition: color .2s; }
 .footer-links a:hover { color: var(--blue); }
 
-/* ── Page layout ─────────────────────────── */
-.mp-header {
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  padding: 28px var(--gutter);
-}
-.mp-header-inner {
-  max-width: var(--container); margin: 0 auto;
-  display: flex; justify-content: space-between;
-  align-items: flex-end; gap: 16px; flex-wrap: wrap;
-}
-.mp-header h2 { margin-bottom: 4px; }
-.mp-header-sub { font-size: 14px; color: var(--muted); }
-
-.mp-body {
-  max-width: var(--container); margin: 0 auto;
-  padding: var(--space-4) var(--gutter);
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: var(--space-4);
-  align-items: start;
-}
-
-/* ── Sidebar / Filter ───────────────────── */
-.filter-sidebar {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3);
-  position: sticky; top: 76px;
-}
-.filter-title {
-  font-size: 13px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .06em;
-  color: var(--muted); margin-bottom: var(--space-2);
-}
-.filter-group { margin-bottom: var(--space-3); }
-.filter-group-label {
-  font-size: 13px; font-weight: 600;
-  color: var(--text); margin-bottom: 10px;
-  display: flex; align-items: center; gap: 6px;
-}
-.filter-game-list { display: flex; flex-direction: column; gap: 2px; }
-.filter-game-btn {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 10px; border-radius: var(--radius);
-  font-size: 13px; font-weight: 500; color: var(--muted);
-  cursor: pointer; border: none; background: none;
-  font-family: 'Outfit', sans-serif;
-  transition: background .15s, color .15s;
-  text-align: left; width: 100%;
-}
-.filter-game-btn:hover   { background: var(--bg2); color: var(--text); }
-.filter-game-btn.active  { background: var(--blue-lt); color: var(--blue); font-weight: 600; }
-.filter-game-count {
-  font-size: 11px; font-weight: 600;
-  background: var(--bg2); color: var(--muted);
-  padding: 2px 7px; border-radius: var(--radius-full);
-}
-.filter-game-btn.active .filter-game-count {
-  background: var(--blue-lt); color: var(--blue);
-}
-.filter-divider {
-  border: none; border-top: 1px solid var(--border);
-  margin: var(--space-2) 0;
-}
-
-/* Price range inputs */
-.price-range { 
-  display: flex;
-  flex-direction: column;
-  align-items: center; 
-  gap: 8px; }
-.price-input {
-  flex: 1; padding: 7px 10px;
-  border: 1px solid var(--border); border-radius: var(--radius);
-  font-family: 'Outfit', sans-serif; font-size: 13px; color: var(--text);
-  background: var(--white); outline: none;
-  transition: border-color .2s;
-}
-.price-input:focus { border-color: var(--blue); }
-.price-dash { font-size: 12px; color: var(--muted); flex-shrink: 0; }
-
-.filter-apply-btn {
-  width: 100%; padding: 9px;
-  background: var(--blue); color: #fff;
-  border: none; border-radius: var(--radius);
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px; font-weight: 600;
-  cursor: pointer; margin-top: 4px;
-  transition: background .2s;
-}
-.filter-apply-btn:hover { background: var(--blue-dk); }
-
-.filter-reset {
-  display: block; text-align: center;
-  font-size: 12px; color: var(--muted);
-  margin-top: 10px; cursor: pointer;
-  transition: color .2s;
-}
-.filter-reset:hover { color: var(--blue); }
-
-/* ── Toolbar (sort + count) ─────────────── */
-.mp-toolbar {
-  display: flex; justify-content: space-between;
-  align-items: center; margin-bottom: var(--space-3);
-  flex-wrap: wrap; gap: 12px;
-}
-.mp-result-count {
-  font-size: 14px; color: var(--muted);
-}
-.mp-result-count strong { color: var(--text); }
-
-.sort-select {
-  padding: 7px 12px; border-radius: var(--radius);
-  border: 1px solid var(--border);
-  font-family: 'Outfit', sans-serif;
-  font-size: 13px; color: var(--text);
-  background: var(--white); outline: none; cursor: pointer;
-  transition: border-color .2s;
-}
-.sort-select:focus { border-color: var(--blue); }
-
-/* ── Active filter chips ────────────────── */
-.active-filters {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  margin-bottom: var(--space-2);
-}
-.filter-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--blue-lt); color: var(--blue);
-  font-size: 12px; font-weight: 600;
-  padding: 4px 10px; border-radius: var(--radius-full);
-}
-.filter-chip-remove {
-  cursor: pointer; font-size: 14px; line-height: 1;
-  opacity: .7; transition: opacity .2s;
-}
-.filter-chip-remove:hover { opacity: 1; }
-
-/* ── Listing grid ───────────────────────── */
-.listing-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-/* Listing card — Level 1 (border, no shadow) */
-.listing-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden; cursor: pointer;
-  transition: border-color .2s, box-shadow .2s, transform .2s;
-  display: flex; flex-direction: column;
-}
-.listing-card:hover {
-  border-color: var(--blue);
-  box-shadow: var(--shadow);
-  transform: translateY(-4px);
-}
-
-.listing-card-img {
-  width: 100%; aspect-ratio: 16/9;
-  object-fit: cover; background: var(--bg2);
-  display: block;
-}
-.listing-card-img-placeholder {
-  width: 100%; aspect-ratio: 16/9;
-  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 40px;
-}
-
-.listing-card-body {
-  padding: 14px 16px;
-  flex: 1; display: flex; flex-direction: column; gap: 8px;
-}
-.listing-card-top {
-  display: flex; justify-content: space-between; align-items: flex-start;
-}
-.listing-card-game {
-  font-size: 11px; font-weight: 700;
-  color: var(--blue); letter-spacing: .04em;
-  text-transform: uppercase;
-}
-.listing-card-title {
-  font-size: 14px; font-weight: 600; color: var(--text);
-  line-height: 1.4; margin-top: 2px;
-}
-
-/* Status badges */
-.badge {
-  font-size: 10px; font-weight: 700; letter-spacing: .03em;
-  padding: 3px 8px; border-radius: var(--radius-sm);
-  text-transform: uppercase; flex-shrink: 0;
-}
-.badge-verified { background: rgba(18,183,106,.1); color: var(--green); }
-.badge-hot      { background: rgba(146,71,0,.1);   color: var(--orange); }
-.badge-new      { background: var(--blue-lt);      color: var(--blue); }
-
-.listing-meta {
-  display: flex; gap: 12px; flex-wrap: wrap;
-}
-.listing-meta-item {
-  display: flex; align-items: center; gap: 4px;
-  font-size: 12px; color: var(--muted);
-}
-.listing-meta-item svg { flex-shrink: 0; color: var(--muted); }
-
-.listing-card-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.listing-price {
-  font-size: 20px; font-weight: 700; color: var(--text);
-}
-.listing-buy-btn {
-  padding: 7px 16px; border-radius: var(--radius);
-  background: var(--blue); color: #fff;
-  font-size: 13px; font-weight: 600;
-  font-family: 'Outfit', sans-serif;
-  border: none; cursor: pointer;
-  transition: background .2s;
-}
-.listing-buy-btn:hover { background: var(--blue-dk); }
-
-/* Empty state */
-.empty-state {
-  text-align: center; padding: var(--space-8) var(--space-4);
-  grid-column: 1 / -1;
-}
-.empty-icon { font-size: 48px; margin-bottom: var(--space-2); }
-.empty-state h3 { margin-bottom: 8px; }
-.empty-state p  { font-size: 14px; color: var(--muted); }
-
-/* ── Mobile filter toggle btn ───────────── */
-.filter-toggle-btn {
-  display: none;
-  align-items: center; gap: 8px;
-  padding: 9px 16px; border-radius: var(--radius);
-  border: 1px solid var(--border); background: var(--white);
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px; font-weight: 600; color: var(--text);
-  cursor: pointer; margin-bottom: var(--space-2);
-}
-
 /* ── ANIMATIONS ──────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
@@ -781,7 +519,6 @@ footer {
   .games-grid   { grid-template-columns: repeat(3, 1fr); }
   .deals-grid   { grid-template-columns: 1fr; }
   .deal-list    { flex-direction: row; }
-  .listing-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
   .hero         { grid-template-columns: 1fr; padding: var(--space-5) var(--space-2); }
@@ -793,19 +530,8 @@ footer {
   .deal-list    { flex-direction: column; }
   .nav-links,
   .search-box   { display: none; }
-  .filter-toggle-btn { display: inline-flex; }
-    .mp-body {
-    grid-template-columns: 1fr;
-  }
-  .filter-sidebar {
-    position: static;
-    display: none; /* toggle via JS */
-  }
-  .filter-sidebar.open { display: block; }
-  .listing-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 480px) {
   .footer-grid  { grid-template-columns: 1fr; }
   .games-grid   { grid-template-columns: repeat(2, 1fr); }
-  .listing-grid { grid-template-columns: 1fr; }
 }
