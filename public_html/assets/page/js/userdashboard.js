@@ -50,7 +50,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ── Modal: Tambah Listing ────────────────────── */
+  /* ── Image upload: preview & drag-drop ───────── */
+  const imageInput    = document.getElementById('lst_image');
+  const imagePreview  = document.getElementById('lstImagePreview');
+  const dropText      = document.getElementById('lstDropText');
+  const dropIcon      = document.getElementById('lstDropIcon');
+  const imageError    = document.getElementById('lstImageError');
+  const dropzone      = document.getElementById('lstImageDropzone');
+
+  function showImagePreview(file) {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+
+    if (!allowed.includes(file.type)) {
+      imageError.textContent = 'Format tidak didukung. Gunakan JPG, PNG, atau WEBP.';
+      imageError.style.display = 'block';
+      return false;
+    }
+    if (file.size > maxSize) {
+      imageError.textContent = 'Ukuran file terlalu besar. Maksimal 2MB.';
+      imageError.style.display = 'block';
+      return false;
+    }
+
+    imageError.style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.src = e.target.result;
+      imagePreview.style.display = 'block';
+      dropText.style.display     = 'none';
+      dropIcon.style.display     = 'none';
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--blue)';
+        dropzone.style.background  = 'var(--blue-lt)';
+      }
+    };
+    reader.readAsDataURL(file);
+    return true;
+  }
+
+  if (imageInput) {
+    imageInput.addEventListener('change', () => {
+      if (imageInput.files[0]) showImagePreview(imageInput.files[0]);
+    });
+  }
+
+  // Expose for ondrop handler
+  window.handleImageDrop = (e) => {
+    e.preventDefault();
+    if (dropzone) {
+      dropzone.style.borderColor = '';
+      dropzone.style.background  = 'var(--bg)';
+    }
+    const file = e.dataTransfer.files[0];
+    if (file && imageInput) {
+      // Assign file ke input supaya ikut terkirim saat form submit
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      imageInput.files = dt.files;
+      showImagePreview(file);
+    }
+  };
+
+  // Reset preview saat modal ditutup
+  function resetImagePreview() {
+    if (imageInput)   imageInput.value = '';
+    if (imagePreview) { imagePreview.src = ''; imagePreview.style.display = 'none'; }
+    if (dropText)     dropText.style.display  = '';
+    if (dropIcon)     dropIcon.style.display  = '';
+    if (dropzone)     { dropzone.style.borderColor = ''; dropzone.style.background = 'var(--bg)'; }
+    if (imageError)   imageError.style.display = 'none';
+  }
+
+
   const modalBackdrop = document.getElementById('addListingModal');
   const btnOpenModal  = document.getElementById('btnAddListing');
   const btnCloseModal = document.getElementById('btnCloseModal');
@@ -66,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalBackdrop) {
       modalBackdrop.classList.remove('open');
       document.body.style.overflow = '';
+      resetImagePreview();
     }
   }
 
@@ -123,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.disabled    = true;
 
       try {
-        const res  = await fetch(listingForm.action, {
+        const res = await fetch(listingForm.getAttribute('action'), {
           method: 'POST',
           body: new FormData(listingForm),
         });

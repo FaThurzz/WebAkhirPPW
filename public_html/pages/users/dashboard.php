@@ -487,16 +487,17 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
     <div class="db-modal-body">
       <form id="formAddListing"
             action="<?php echo $base_url; ?>pages/users/add_listing.php"
-            method="POST">
-
+            method="POST"
+            enctype="multipart/form-data">
+ 
         <div class="db-form-grid">
-
+ 
           <div class="db-form-group full">
             <label for="lst_title">Judul Listing <span style="color:#dc2626;">*</span></label>
             <input type="text" id="lst_title" name="title" required
                    placeholder="cth: Valorant Immortal 3 – All Agents Unlocked">
           </div>
-
+ 
           <div class="db-form-group">
             <label for="lst_game">Game <span style="color:#dc2626;">*</span></label>
             <select id="lst_game" name="game_id" required>
@@ -506,23 +507,34 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
               <?php endforeach; ?>
             </select>
           </div>
-
+ 
           <div class="db-form-group">
             <label for="lst_price">Harga (Rp) <span style="color:#dc2626;">*</span></label>
             <input type="number" id="lst_price" name="price" required
                    min="1000" step="1000" placeholder="350000">
           </div>
-
+ 
           <div class="db-form-group">
             <label for="lst_rank">Rank</label>
             <input type="text" id="lst_rank" name="rank" placeholder="cth: Immortal 3">
           </div>
-
+ 
           <div class="db-form-group">
             <label for="lst_level">Level</label>
             <input type="number" id="lst_level" name="level" min="1" placeholder="150">
           </div>
 
+          <div class="db-form-group full">
+            <label for="lst_server">Server</label>
+            <select id="lst_server" name="server">
+              <option value="">-- Pilih Server --</option>
+              <option value="Asia">Asia</option>
+              <option value="North America">North America</option>
+              <option value="Europe">Europe</option>
+              <option value="Global">Global</option>
+            </select>
+          </div>
+ 
           <div class="db-form-group full">
             <label for="lst_login_type">Tipe Login Akun</label>
             <select id="lst_login_type" name="account_login_type">
@@ -535,12 +547,42 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
               <option value="Lainnya">Lainnya</option>
             </select>
           </div>
-
+ 
           <div class="db-form-group full">
             <label for="lst_id">ID Akun (opsional)</label>
             <input type="text" id="lst_id" name="id" placeholder="ID dalam game">
           </div>
-
+ 
+          <div class="db-form-group full">
+            <label for="lst_image">Foto Screenshot Akun <span style="color:#dc2626;">*</span></label>
+            <!-- Drop zone -->
+            <div id="lstImageDropzone" style="
+                border: 2px dashed var(--border);
+                border-radius: var(--radius-md);
+                padding: 24px 16px;
+                text-align: center;
+                cursor: pointer;
+                transition: border-color .2s, background .2s;
+                background: var(--bg);"
+              onclick="document.getElementById('lst_image').click()"
+              ondragover="event.preventDefault();this.style.borderColor='var(--blue)';this.style.background='var(--blue-lt)'"
+              ondragleave="this.style.borderColor='';this.style.background='var(--bg)'"
+              ondrop="handleImageDrop(event)">
+              <div id="lstDropIcon" style="font-size:32px;margin-bottom:8px;">🖼️</div>
+              <div id="lstDropText" style="font-size:13px;color:var(--muted);">
+                Klik atau <strong>drag &amp; drop</strong> gambar di sini<br>
+                <span style="font-size:11px;">JPG, PNG, WEBP · Maks. 2MB</span>
+              </div>
+              <!-- Preview -->
+              <img id="lstImagePreview" src="" alt="Preview"
+                   style="display:none;max-height:180px;border-radius:var(--radius);margin-top:12px;object-fit:contain;">
+            </div>
+            <input type="file" id="lst_image" name="image"
+                   accept="image/jpeg,image/png,image/webp"
+                   style="display:none;" required>
+            <div id="lstImageError" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></div>
+          </div>
+ 
           <div class="db-form-group full">
             <label for="lst_desc">Deskripsi</label>
             <textarea id="lst_desc" name="description" rows="4"
@@ -549,9 +591,9 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
                       onfocus="this.style.borderColor='var(--blue)';this.style.boxShadow='0 0 0 3px rgba(26,86,255,.1)'"
                       onblur="this.style.borderColor='';this.style.boxShadow=''"></textarea>
           </div>
-
+ 
         </div>
-
+ 
         <div class="db-form-actions" style="margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border);">
           <button type="button" id="btnCloseModal2"
                   class="btn btn-outline" style="font-size:13px;padding:8px 16px;"
@@ -563,7 +605,7 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
             Tambah Listing
           </button>
         </div>
-
+ 
       </form>
     </div>
   </div>
