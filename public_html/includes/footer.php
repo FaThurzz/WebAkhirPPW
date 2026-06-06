@@ -62,6 +62,6 @@ $currentYear = date("Y");
   </div>
 </footer>
 
-<script src="assets/main.js"></script>
+<script src="<?php echo $base_url; ?>assets/main.js"></script>
 </body>
 </html>
