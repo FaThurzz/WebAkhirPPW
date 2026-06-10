@@ -116,7 +116,7 @@ function getBadge($listing) {
 include '../includes/header.php';
 ?>
 <head>
-  <link rel="stylesheet" href="../assets/page/marketplace.css">
+  <link rel="stylesheet" href="../assets/page/css/marketplace.css">
 </head>
 <body>
 

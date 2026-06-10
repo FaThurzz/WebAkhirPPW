@@ -1,0 +1,401 @@
+/* ══════════════════════════════════════════════
+   ThurzShop — listing-detail.css
+   Styles khusus halaman Detail Listing
+   ══════════════════════════════════════════════ */
+
+/* ── Breadcrumb ─────────────────────────────── */
+.ld-breadcrumb {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 12px var(--gutter);
+}
+.ld-breadcrumb-inner {
+  max-width: var(--container); margin: 0 auto;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted);
+  flex-wrap: wrap;
+}
+.ld-breadcrumb-inner a {
+  color: var(--muted);
+  transition: color .2s;
+}
+.ld-breadcrumb-inner a:hover { color: var(--blue); }
+.ld-breadcrumb-inner span   { color: var(--text); font-weight: 500; }
+.ld-breadcrumb-inner svg    { color: var(--border-strong); flex-shrink: 0; }
+
+/* ── Two-column layout ──────────────────────── */
+.ld-container {
+  max-width: var(--container); margin: 0 auto;
+  padding: var(--space-4) var(--gutter);
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* ── Left column ────────────────────────────── */
+.ld-left { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* ── Gallery ────────────────────────────────── */
+.ld-gallery {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  aspect-ratio: 16/9;
+}
+.ld-gallery-img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.ld-gallery-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 72px;
+  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+}
+.ld-gallery-badge {
+  position: absolute; top: 14px; left: 14px;
+}
+
+/* ── Cards ──────────────────────────────────── */
+.ld-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+.ld-card-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+.ld-card-header svg { color: var(--blue); }
+
+/* Description */
+.ld-description {
+  font-size: 14px; color: var(--muted);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.ld-no-desc { font-style: italic; }
+
+/* Specs grid */
+.ld-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 24px;
+}
+.ld-spec-item {}
+.ld-spec-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin-bottom: 4px;
+}
+.ld-spec-value {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; gap: 5px;
+}
+.ld-spec-value svg { color: var(--muted); flex-shrink: 0; }
+.ld-spec-status { color: var(--green); }
+.ld-status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+}
+
+/* Safety banner */
+.ld-safety-banner {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: rgba(18,183,106,.06);
+  border: 1px solid rgba(18,183,106,.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3);
+}
+.ld-safety-icon { font-size: 24px; flex-shrink: 0; }
+.ld-safety-title {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  margin-bottom: 4px;
+}
+.ld-safety-sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ── Right sidebar ──────────────────────────── */
+.ld-sidebar {
+  position: sticky; top: 76px;
+  display: flex; flex-direction: column; gap: var(--space-2);
+}
+
+/* Price card */
+.ld-price-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.ld-game-label {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--blue-lt); color: var(--blue);
+  padding: 5px 12px; border-radius: var(--radius-full);
+  font-size: 12px; font-weight: 700;
+  letter-spacing: .02em; margin-bottom: var(--space-2);
+}
+.ld-game-icon-img {
+  width: 18px; height: 18px; border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+.ld-game-icon-fallback { font-size: 14px; }
+
+.ld-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px; font-weight: 700;
+  line-height: 1.3; color: var(--text);
+  margin-bottom: var(--space-2);
+  letter-spacing: -.01em;
+}
+
+/* Meta chips */
+.ld-meta-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: var(--space-2);
+}
+.ld-chip {
+  background: var(--bg2); color: var(--muted);
+  font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+}
+
+.ld-price-divider {
+  border: none; border-top: 1px solid var(--border);
+  margin: var(--space-2) 0;
+}
+
+.ld-price-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin-bottom: 4px;
+}
+.ld-price {
+  font-size: 32px; font-weight: 800;
+  color: var(--text); letter-spacing: -.02em;
+  margin-bottom: var(--space-3);
+}
+
+/* Buttons */
+.ld-btn-buy {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 13px;
+  background: var(--blue); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; text-decoration: none;
+  transition: background .2s, transform .2s, box-shadow .2s;
+  margin-bottom: 10px;
+}
+.ld-btn-buy:hover {
+  background: var(--blue-dk);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,88,190,.3);
+}
+.ld-btn-chat {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px;
+  background: var(--white); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+  margin-bottom: var(--space-2);
+}
+.ld-btn-chat:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Trust row */
+.ld-trust-row {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: var(--space-2);
+}
+.ld-trust-item {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 500; color: var(--muted);
+}
+
+/* Seller card */
+.ld-seller-card { }
+.ld-seller-info {
+  display: flex; align-items: center; gap: 12px;
+}
+.ld-seller-avatar-img,
+.ld-seller-initials {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+}
+.ld-seller-avatar-img { object-fit: cover; border: 2px solid var(--border); }
+.ld-seller-initials {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--blue); color: #fff;
+  font-size: 18px; font-weight: 700;
+}
+.ld-seller-name  { font-size: 15px; font-weight: 700; color: var(--text); }
+.ld-seller-since { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Back link */
+.ld-btn-back {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 10px;
+  background: var(--white); color: var(--muted);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 13px; font-weight: 600;
+  text-decoration: none;
+  transition: border-color .2s, color .2s;
+}
+.ld-btn-back:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ── Related listings ────────────────────────── */
+.ld-related {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: var(--space-5) var(--gutter);
+}
+.ld-related-inner {
+  max-width: var(--container); margin: 0 auto;
+}
+.ld-related-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-end; margin-bottom: var(--space-3);
+}
+.ld-related-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* ── Modal ──────────────────────────────────── */
+.ld-modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0, 0, 0, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--gutter);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.ld-modal-overlay.open {
+  opacity: 1; pointer-events: auto;
+}
+.ld-modal {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  width: 100%; max-width: 440px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(16px) scale(.98);
+  transition: transform .25s ease;
+}
+.ld-modal-overlay.open .ld-modal {
+  transform: translateY(0) scale(1);
+}
+.ld-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.ld-modal-header h3 { font-size: 17px; font-weight: 700; }
+.ld-modal-close {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: none; cursor: pointer; color: var(--muted);
+  transition: background .2s, color .2s;
+}
+.ld-modal-close:hover { background: var(--bg2); color: var(--text); }
+
+.ld-modal-body { padding: var(--space-3); }
+.ld-modal-item {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.ld-modal-label { font-size: 13px; color: var(--muted); }
+.ld-modal-value { font-size: 14px; font-weight: 600; color: var(--text); text-align: right; max-width: 230px; }
+.ld-modal-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.ld-modal-total .ld-modal-label { font-size: 15px; font-weight: 700; color: var(--text); }
+.ld-modal-price { font-size: 24px; font-weight: 800; color: var(--blue); }
+
+.ld-modal-footer {
+  display: flex; gap: 10px;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+.ld-modal-btn-cancel {
+  flex: 1; padding: 11px;
+  background: var(--white); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background .2s;
+}
+.ld-modal-btn-cancel:hover { background: var(--bg2); }
+.ld-modal-btn-confirm {
+  flex: 2; padding: 11px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  background: var(--blue); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background .2s;
+}
+.ld-modal-btn-confirm:hover { background: var(--blue-dk); }
+
+/* ── Shared listing-card styles (reused from marketplace) ── */
+/* These are already in style.css / marketplace.css, but
+   keep selectors scoped to .ld-related-grid for safe override */
+.ld-related-grid .listing-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden; cursor: pointer;
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+  display: flex; flex-direction: column;
+}
+.ld-related-grid .listing-card:hover {
+  border-color: var(--blue);
+  box-shadow: var(--shadow);
+  transform: translateY(-4px);
+}
+
+/* ── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 1024px) {
+  .ld-container {
+    grid-template-columns: 1fr 340px;
+  }
+  .ld-related-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .ld-container {
+    grid-template-columns: 1fr;
+  }
+  .ld-sidebar {
+    position: static;
+    order: -1; /* sidebar ke atas di mobile */
+  }
+  .ld-specs-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ld-related-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ld-title { font-size: 18px; }
+  .ld-price { font-size: 26px; }
+}
+@media (max-width: 480px) {
+  .ld-related-grid {
+    grid-template-columns: 1fr;
+  }
+  .ld-specs-grid {
+    grid-template-columns: 1fr;
+  }
+  .ld-modal-footer {
+    flex-direction: column;
+  }
+}
