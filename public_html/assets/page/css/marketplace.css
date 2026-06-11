@@ -70,6 +70,21 @@
   margin: var(--space-2) 0;
 }
 
+.filter-search-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  transition: border-color .2s;
+}
+
+.filter-search-input:focus { border-color: var(--blue); }
+
 /* Price range inputs */
 .price-range {
   display: flex;
@@ -239,6 +254,50 @@
 .empty-icon { font-size: 48px; margin-bottom: var(--space-2); }
 .empty-state h3 { margin-bottom: 8px; }
 .empty-state p  { font-size: 14px; color: var(--muted); }
+
+/* Pagination */
+.mp-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-4);
+}
+
+.mp-page-btn,
+.mp-page-ellipsis {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mp-page-btn {
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--muted);
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+.mp-page-btn:hover,
+.mp-page-btn.active {
+  border-color: var(--blue);
+  background: var(--blue-lt);
+  color: var(--blue);
+}
+
+.mp-page-btn.disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+.mp-page-ellipsis {
+  color: var(--muted);
+}
 
 /* ── Mobile filter toggle btn ───────────── */
 .filter-toggle-btn {

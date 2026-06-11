@@ -300,6 +300,23 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
                   </small>
                 </div>
                 <?php if ($item['status'] === 'ready'): ?>
+                  <button class="btn-edit-listing"
+                    data-id="<?php echo (int)$item['listing_id']; ?>"
+                    data-game-id="<?php echo (int)$item['game_id']; ?>"
+                    data-title="<?php echo htmlspecialchars($item['title'] ?? '', ENT_QUOTES); ?>"
+                    data-price="<?php echo htmlspecialchars((string)$item['price'], ENT_QUOTES); ?>"
+                    data-rank="<?php echo htmlspecialchars($item['rank'] ?? '', ENT_QUOTES); ?>"
+                    data-level="<?php echo htmlspecialchars((string)($item['level'] ?? ''), ENT_QUOTES); ?>"
+                    data-server="<?php echo htmlspecialchars($item['server'] ?? '', ENT_QUOTES); ?>"
+                    data-login-type="<?php echo htmlspecialchars($item['account_login_type'] ?? '', ENT_QUOTES); ?>"
+                    data-account-id="<?php echo htmlspecialchars($item['id'] ?? '', ENT_QUOTES); ?>"
+                    data-description="<?php echo htmlspecialchars($item['description'] ?? '', ENT_QUOTES); ?>"
+                    data-image-url="<?php echo !empty($item['image_url']) ? htmlspecialchars($base_url . $item['image_url'], ENT_QUOTES) : ''; ?>"
+                    title="Edit listing"
+                    style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:var(--radius-sm);transition:color .15s;"
+                    onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='var(--muted)'">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
                   <button class="btn-delete-listing" data-id="<?php echo $item['listing_id']; ?>"
                     title="Hapus listing"
                     style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:var(--radius-sm);transition:color .15s;"
@@ -489,6 +506,7 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
             action="<?php echo $base_url; ?>pages/users/add_listing.php"
             method="POST"
             enctype="multipart/form-data">
+        <input type="hidden" id="lst_listing_id" name="listing_id" value="">
  
         <div class="db-form-grid">
  
@@ -554,7 +572,7 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
           </div>
  
           <div class="db-form-group full">
-            <label for="lst_image">Foto Screenshot Akun <span style="color:#dc2626;">*</span></label>
+            <label for="lst_image">Foto Screenshot Akun <span id="lstImageRequired" style="color:#dc2626;">*</span></label>
             <!-- Drop zone -->
             <div id="lstImageDropzone" style="
                 border: 2px dashed var(--border);
@@ -602,7 +620,7 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
           </button>
           <button type="submit" class="btn btn-primary" style="font-size:13px;padding:8px 20px;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Tambah Listing
+            <span id="listingSubmitText">Tambah Listing</span>
           </button>
         </div>
  

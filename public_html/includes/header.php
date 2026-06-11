@@ -65,6 +65,11 @@ $base_url = '/ProjectAkhir/public_html/';
       font-size: 14px; color: var(--text); width: 160px;
     }
     .search-box input::placeholder { color: var(--muted); }
+    .search-box button {
+      border: none; background: none; padding: 0; cursor: pointer;
+      display: flex; align-items: center; color: var(--muted);
+    }
+    .search-box button:hover { color: var(--blue); }
 
     .nav-icon {
       width: 36px; height: 36px; border-radius: var(--radius);
@@ -197,6 +202,24 @@ $base_url = '/ProjectAkhir/public_html/';
              class="<?php echo (isset($active_page) && $active_page == 'review') ? 'active' : ''; ?>">Reviews</a></li>
     </ul>
     <div class="nav-right">
+      <form class="search-box" method="GET" action="<?php echo $base_url; ?>pages/marketplace.php">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          name="q"
+          placeholder="Cari akun game"
+          value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>"
+          autocomplete="off"
+        />
+        <button type="submit" aria-label="Cari">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+            <path d="M5 12h14M13 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </form>
       <?php if (isset($_SESSION['user'])): ?>
         <?php
           $nav_user     = $_SESSION['user'];
@@ -300,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') {
         const query = searchInput.value.trim();
         if (query) {
-          window.location.href = `pages/marketplace.php?q=${encodeURIComponent(query)}`;
+          window.location.href = `<?php echo $base_url; ?>pages/marketplace.php?q=${encodeURIComponent(query)}`;
         }
       }
     });

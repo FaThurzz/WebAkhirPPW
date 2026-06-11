@@ -9,6 +9,8 @@ $filterSearch = isset($_GET['q'])      ? trim($_GET['q'])      : '';
 $filterSort   = isset($_GET['sort'])   ? trim($_GET['sort'])   : 'newest';
 $filterMin    = isset($_GET['min'])    ? trim($_GET['min'])    : '';
 $filterMax    = isset($_GET['max'])    ? trim($_GET['max'])    : '';
+$currentPage  = isset($_GET['page'])   ? max(1, (int)$_GET['page']) : 1;
+$perPage      = 6;
 
 // ── Ambil daftar game untuk dropdown filter ─────────────────────────────
 $games = [];
@@ -56,6 +58,35 @@ if ($filterSort === 'price_asc') {
 
 $whereClause = implode(' AND ', $whereParts);
 
+$countSql = "SELECT COUNT(*) AS total
+             FROM account_listing al
+             JOIN games g ON al.game_id = g.id
+             WHERE $whereClause";
+
+$totalResults = 0;
+
+if (!empty($params)) {
+    $countStmt = mysqli_prepare($conn, $countSql);
+    if ($countStmt) {
+        mysqli_stmt_bind_param($countStmt, $types, ...$params);
+        mysqli_stmt_execute($countStmt);
+        $countResult = mysqli_stmt_get_result($countStmt);
+        $countRow = mysqli_fetch_assoc($countResult);
+        $totalResults = (int)($countRow['total'] ?? 0);
+        mysqli_stmt_close($countStmt);
+    }
+} else {
+    $countResult = mysqli_query($conn, $countSql);
+    if ($countResult) {
+        $countRow = mysqli_fetch_assoc($countResult);
+        $totalResults = (int)($countRow['total'] ?? 0);
+    }
+}
+
+$totalPages = max(1, (int)ceil($totalResults / $perPage));
+$currentPage = min($currentPage, $totalPages);
+$offset = ($currentPage - 1) * $perPage;
+
 $sql = "SELECT
             al.listing_id  AS id,
             al.title,
@@ -73,31 +104,50 @@ $sql = "SELECT
         FROM account_listing al
         JOIN games g ON al.game_id = g.id
         WHERE $whereClause
-        ORDER BY $orderBy";
+        ORDER BY $orderBy
+        LIMIT ? OFFSET ?";
 
 $filtered = array();
 
-if (!empty($params)) {
-    $stmt = mysqli_prepare($conn, $sql);
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, $types, ...$params);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        while ($row = mysqli_fetch_assoc($result)) {
-            $filtered[] = $row;
-        }
-        mysqli_stmt_close($stmt);
+$stmt = mysqli_prepare($conn, $sql);
+if ($stmt) {
+    $listParams = $params;
+    $listTypes  = $types . 'ii';
+    $listParams[] = $perPage;
+    $listParams[] = $offset;
+
+    mysqli_stmt_bind_param($stmt, $listTypes, ...$listParams);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $filtered[] = $row;
     }
-} else {
-    $result = mysqli_query($conn, $sql);
-    if ($result) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            $filtered[] = $row;
-        }
-    }
+    mysqli_stmt_close($stmt);
 }
 
-$totalResults = count($filtered);
+$firstShown = $totalResults > 0 ? $offset + 1 : 0;
+$lastShown  = min($offset + count($filtered), $totalResults);
+
+function marketplaceUrl($page, $overrides = array()) {
+    global $filterGame, $filterSearch, $filterMin, $filterMax, $filterSort;
+
+    $query = array_merge(array(
+        'game' => $filterGame,
+        'q'    => $filterSearch,
+        'min'  => $filterMin,
+        'max'  => $filterMax,
+        'sort' => $filterSort,
+        'page' => $page,
+    ), $overrides);
+
+    foreach ($query as $key => $value) {
+        if ($value === '' || $value === null) {
+            unset($query[$key]);
+        }
+    }
+
+    return 'marketplace.php?' . http_build_query($query);
+}
 
 // Helper: format harga Rupiah
 function formatRp($price) {
@@ -149,12 +199,23 @@ include '../includes/header.php';
 <!-- ── Sidebar Filter ── -->
 <aside class="filter-sidebar" id="filterSidebar">
   <form method="GET" action="marketplace.php" id="filterForm">
-    <?php if ($filterSearch !== ''): ?>
-      <input type="hidden" name="q" value="<?php echo htmlspecialchars($filterSearch); ?>">
-    <?php endif; ?>
     <input type="hidden" name="sort" value="<?php echo htmlspecialchars($filterSort); ?>">
+    <input type="hidden" name="page" value="1">
 
     <div class="filter-title">Filter</div>
+
+    <div class="filter-group">
+      <div class="filter-group-label">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        Pencarian
+      </div>
+      <input class="filter-search-input" type="search" name="q"
+             placeholder="Cari judul atau game"
+             value="<?php echo htmlspecialchars($filterSearch); ?>">
+    </div>
 
     <!-- Game filter dropdown dari DB -->
     <div class="filter-group">
@@ -211,14 +272,14 @@ include '../includes/header.php';
     <?php if ($filterSearch !== ''): ?>
       <span class="filter-chip">
         🔍 "<?php echo htmlspecialchars($filterSearch); ?>"
-        <a href="marketplace.php?<?php echo http_build_query(array('game'=>$filterGame,'min'=>$filterMin,'max'=>$filterMax,'sort'=>$filterSort)); ?>"
+        <a href="<?php echo marketplaceUrl(1, array('q' => '')); ?>"
            class="filter-chip-remove">✕</a>
       </span>
     <?php endif; ?>
     <?php if ($filterGame !== ''): ?>
       <span class="filter-chip">
         🎮 <?php echo htmlspecialchars($filterGame); ?>
-        <a href="marketplace.php?<?php echo http_build_query(array('q'=>$filterSearch,'min'=>$filterMin,'max'=>$filterMax,'sort'=>$filterSort)); ?>"
+        <a href="<?php echo marketplaceUrl(1, array('game' => '')); ?>"
            class="filter-chip-remove">✕</a>
       </span>
     <?php endif; ?>
@@ -227,7 +288,7 @@ include '../includes/header.php';
         💰 <?php echo $filterMin !== '' ? formatRp((int)$filterMin) : '0'; ?>
             &ndash;
             <?php echo $filterMax !== '' ? formatRp((int)$filterMax) : '∞'; ?>
-        <a href="marketplace.php?<?php echo http_build_query(array('game'=>$filterGame,'q'=>$filterSearch,'sort'=>$filterSort)); ?>"
+        <a href="<?php echo marketplaceUrl(1, array('min' => '', 'max' => '')); ?>"
            class="filter-chip-remove">✕</a>
       </span>
     <?php endif; ?>
@@ -237,13 +298,15 @@ include '../includes/header.php';
   <!-- Toolbar -->
   <div class="mp-toolbar">
     <span class="mp-result-count">
-      Menampilkan <strong><?php echo $totalResults; ?></strong> akun game
+      Menampilkan <strong><?php echo $firstShown; ?>-<?php echo $lastShown; ?></strong>
+      dari <strong><?php echo $totalResults; ?></strong> akun game
     </span>
     <form method="GET" action="marketplace.php" id="sortForm">
       <input type="hidden" name="game" value="<?php echo htmlspecialchars($filterGame); ?>">
       <input type="hidden" name="q"    value="<?php echo htmlspecialchars($filterSearch); ?>">
       <input type="hidden" name="min"  value="<?php echo htmlspecialchars($filterMin); ?>">
       <input type="hidden" name="max"  value="<?php echo htmlspecialchars($filterMax); ?>">
+      <input type="hidden" name="page" value="1">
       <select class="sort-select" name="sort" onchange="this.form.submit()">
         <option value="newest"     <?php echo $filterSort === 'newest'     ? 'selected' : ''; ?>>Terbaru</option>
         <option value="price_asc"  <?php echo $filterSort === 'price_asc'  ? 'selected' : ''; ?>>Harga: Murah dulu</option>
@@ -341,6 +404,37 @@ include '../includes/header.php';
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
+
+  <?php if ($totalPages > 1): ?>
+    <nav class="mp-pagination" aria-label="Pagination marketplace">
+      <a class="mp-page-btn <?php echo $currentPage <= 1 ? 'disabled' : ''; ?>"
+         href="<?php echo $currentPage <= 1 ? '#' : marketplaceUrl($currentPage - 1); ?>"
+         aria-label="Halaman sebelumnya">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </a>
+
+      <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+        <?php if ($i === 1 || $i === $totalPages || abs($i - $currentPage) <= 1): ?>
+          <a class="mp-page-btn <?php echo $i === $currentPage ? 'active' : ''; ?>"
+             href="<?php echo marketplaceUrl($i); ?>">
+            <?php echo $i; ?>
+          </a>
+        <?php elseif ($i === $currentPage - 2 || $i === $currentPage + 2): ?>
+          <span class="mp-page-ellipsis">...</span>
+        <?php endif; ?>
+      <?php endfor; ?>
+
+      <a class="mp-page-btn <?php echo $currentPage >= $totalPages ? 'disabled' : ''; ?>"
+         href="<?php echo $currentPage >= $totalPages ? '#' : marketplaceUrl($currentPage + 1); ?>"
+         aria-label="Halaman berikutnya">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </a>
+    </nav>
+  <?php endif; ?>
 
 </div><!-- end listing area -->
 </div><!-- end mp-body -->

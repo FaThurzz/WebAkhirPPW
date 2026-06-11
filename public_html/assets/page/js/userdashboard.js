@@ -126,11 +126,70 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalBackdrop = document.getElementById('addListingModal');
   const btnOpenModal  = document.getElementById('btnAddListing');
   const btnCloseModal = document.getElementById('btnCloseModal');
+  const btnCloseModal2 = document.getElementById('btnCloseModal2');
+  const listingForm = document.getElementById('formAddListing');
+  const addListingAction = listingForm ? listingForm.getAttribute('action') : '';
+  const updateListingAction = 'update_listing.php';
+  const modalTitle = document.getElementById('modalTitle');
+  const listingSubmitText = document.getElementById('listingSubmitText');
+  const imageRequiredMark = document.getElementById('lstImageRequired');
+
+  function setListingFormMode(mode = 'add', data = {}) {
+    if (!listingForm) return;
+
+    listingForm.reset();
+    resetImagePreview();
+    listingForm.dataset.mode = mode;
+    listingForm.action = mode === 'edit' ? updateListingAction : addListingAction;
+
+    if (modalTitle) modalTitle.textContent = mode === 'edit' ? 'Edit Listing' : 'Jual Akun Game';
+    if (listingSubmitText) listingSubmitText.textContent = mode === 'edit' ? 'Simpan Perubahan' : 'Tambah Listing';
+    if (imageInput) imageInput.required = mode !== 'edit';
+    if (imageRequiredMark) imageRequiredMark.style.display = mode === 'edit' ? 'none' : '';
+
+    if (mode !== 'edit') return;
+
+    const values = {
+      lst_listing_id: data.id || '',
+      lst_title: data.title || '',
+      lst_game: data.gameId || '',
+      lst_price: data.price || '',
+      lst_rank: data.rank || '',
+      lst_level: data.level || '',
+      lst_server: data.server || '',
+      lst_login_type: data.loginType || '',
+      lst_id: data.accountId || '',
+      lst_desc: data.description || '',
+    };
+
+    Object.entries(values).forEach(([id, value]) => {
+      const field = document.getElementById(id);
+      if (field) field.value = value;
+    });
+
+    if (data.imageUrl && imagePreview) {
+      imagePreview.src = data.imageUrl;
+      imagePreview.style.display = 'block';
+      if (dropText) dropText.style.display = 'none';
+      if (dropIcon) dropIcon.style.display = 'none';
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--blue)';
+        dropzone.style.background = 'var(--blue-lt)';
+      }
+    }
+  }
+
+  function openListingModal(mode = 'add', data = {}) {
+    setListingFormMode(mode, data);
+    if (modalBackdrop) {
+      modalBackdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  }
 
   if (btnOpenModal && modalBackdrop) {
     btnOpenModal.addEventListener('click', () => {
-      modalBackdrop.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      openListingModal('add');
     });
   }
 
@@ -138,11 +197,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalBackdrop) {
       modalBackdrop.classList.remove('open');
       document.body.style.overflow = '';
-      resetImagePreview();
+      setListingFormMode('add');
     }
   }
 
   if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
+  if (btnCloseModal2) btnCloseModal2.addEventListener('click', closeModal);
 
   // Close on backdrop click
   if (modalBackdrop) {
@@ -186,14 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ── Listing form: submit via AJAX ───────────── */
-  const listingForm = document.getElementById('formAddListing');
   if (listingForm) {
     listingForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn  = listingForm.querySelector('[type="submit"]');
-      const orig = btn.textContent;
-      btn.textContent = 'Menyimpan...';
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<span>Menyimpan...</span>';
       btn.disabled    = true;
+      const isEdit = listingForm.dataset.mode === 'edit';
 
       try {
         const res = await fetch(listingForm.getAttribute('action'), {
@@ -204,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           closeModal();
-          showToast('Listing berhasil ditambahkan!', 'success');
+          showToast(data.message || (isEdit ? 'Listing berhasil diperbarui!' : 'Listing berhasil ditambahkan!'), 'success');
           setTimeout(() => window.location.reload(), 1200);
         } else {
           showToast(data.message || 'Terjadi kesalahan.', 'error');
@@ -212,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch {
         showToast('Gagal terhubung ke server.', 'error');
       } finally {
-        btn.textContent = orig;
+        btn.innerHTML = orig;
         btn.disabled    = false;
       }
     });
@@ -284,13 +344,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ── Delete listing confirm ───────────────────── */
+  document.querySelectorAll('.btn-edit-listing').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openListingModal('edit', btn.dataset);
+    });
+  });
+
   document.querySelectorAll('.btn-delete-listing').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!confirm('Hapus listing ini? Tindakan tidak dapat dibatalkan.')) return;
 
       const id = btn.dataset.id;
       try {
-        const res  = await fetch(`<?php echo $base_url; ?>pages/users/delete_listing.php`, {
+        const res  = await fetch('delete_listing.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: `listing_id=${id}`,

@@ -165,6 +165,5 @@ if (mysqli_stmt_execute($stmt)) {
     echo json_encode([
         'success' => false,
         'message' => 'Gagal menyimpan listing ke database.',
-        'debug'   => mysqli_error($conn), // hapus setelah testing
     ]);
 }
