@@ -49,11 +49,14 @@ $active_count   = $total_listings - $sold_count;
 
 // ── Fetch: pembelian milik user ──────────────────────────────────────────────
 $stmt3 = mysqli_prepare($conn,
-    "SELECT o.*, al.title, al.rank, al.level, g.name AS game_name, g.image_url AS game_image,
-            p.payment_status, p.payment_method, p.paid_at
+    "SELECT o.*, al.title, al.rank, al.level, al.image_url AS listing_image,
+            g.name AS game_name, g.image_url AS game_image,
+            seller.username AS seller_name,
+            p.payment_status, p.payment_method, p.payment_proof, p.paid_at
      FROM orders o
      JOIN account_listing al ON o.listing_id = al.listing_id
      JOIN games g ON al.game_id = g.id
+     LEFT JOIN users seller ON al.user_id = seller.ID_User
      LEFT JOIN payment p ON o.order_id = p.order_id
      WHERE o.user_id = ?
      ORDER BY o.created_at DESC"
@@ -87,6 +90,14 @@ function order_badge(string $status): string {
         'paid'      => '<span class="badge badge-paid">● Dibayar</span>',
         'cancelled' => '<span class="badge badge-cancelled">✕ Dibatalkan</span>',
         default     => '<span class="badge badge-pending">◌ Menunggu</span>',
+    };
+}
+function order_status_label(string $status): string {
+    return match ($status) {
+        'confirmed' => 'Terkonfirmasi',
+        'paid'      => 'Dibayar',
+        'cancelled' => 'Dibatalkan',
+        default     => 'Menunggu Pembayaran',
     };
 }
 
@@ -342,8 +353,13 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
           <?php else: ?>
             <div class="db-item-list">
               <?php foreach ($purchases as $p): ?>
+              <?php
+                $purchase_status = $p['payment_status'] ?: $p['order_status'];
+                $purchase_image = !empty($p['listing_image']) ? $base_url . $p['listing_image'] : $p['game_image'];
+                $proof_url = !empty($p['payment_proof']) ? $base_url . $p['payment_proof'] : '';
+              ?>
               <div class="db-item">
-                <img src="<?php echo htmlspecialchars($p['game_image']); ?>"
+                <img src="<?php echo htmlspecialchars($purchase_image); ?>"
                      alt="<?php echo htmlspecialchars($p['game_name']); ?>"
                      class="db-item-thumb"
                      onerror="this.src=''">
@@ -357,7 +373,7 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
                     <span>· <?php echo date('d M Y', strtotime($p['created_at'])); ?></span>
                   </div>
                 </div>
-                <?php echo order_badge($p['payment_status'] ?? $p['order_status']); ?>
+                <?php echo order_badge($purchase_status); ?>
                 <div class="db-item-price">
                   <?php echo rupiah((float)$p['total_price']); ?>
                   <small>
@@ -368,6 +384,23 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
                     <?php endif; ?>
                   </small>
                 </div>
+                <button type="button"
+                        class="db-purchase-detail-btn"
+                        data-order-id="<?php echo (int)$p['order_id']; ?>"
+                        data-listing-id="<?php echo (int)$p['listing_id']; ?>"
+                        data-title="<?php echo htmlspecialchars($p['title'], ENT_QUOTES); ?>"
+                        data-game="<?php echo htmlspecialchars($p['game_name'], ENT_QUOTES); ?>"
+                        data-seller="<?php echo htmlspecialchars($p['seller_name'] ?? '-', ENT_QUOTES); ?>"
+                        data-total="<?php echo htmlspecialchars(rupiah((float)$p['total_price']), ENT_QUOTES); ?>"
+                        data-method="<?php echo htmlspecialchars($p['payment_method'] ?? '', ENT_QUOTES); ?>"
+                        data-status="<?php echo htmlspecialchars($purchase_status, ENT_QUOTES); ?>"
+                        data-status-label="<?php echo htmlspecialchars(order_status_label($purchase_status), ENT_QUOTES); ?>"
+                        data-created="<?php echo htmlspecialchars(date('d M Y, H:i', strtotime($p['created_at'])), ENT_QUOTES); ?>"
+                        data-paid="<?php echo htmlspecialchars(!empty($p['paid_at']) ? date('d M Y, H:i', strtotime($p['paid_at'])) : '-', ENT_QUOTES); ?>"
+                        data-image="<?php echo htmlspecialchars($purchase_image, ENT_QUOTES); ?>"
+                        data-proof-url="<?php echo htmlspecialchars($proof_url, ENT_QUOTES); ?>">
+                  Detail
+                </button>
               </div>
               <?php endforeach; ?>
             </div>
@@ -488,6 +521,103 @@ $initial = strtoupper(mb_substr($user['username'], 0, 2));
 
 </div>
 <!-- /dashboard-wrapper -->
+
+<!--
+     MODAL: DETAIL PEMBELIAN
+-->
+<div class="db-modal-backdrop" id="purchaseDetailModal" role="dialog" aria-modal="true" aria-labelledby="purchaseModalTitle">
+  <div class="db-modal db-modal--purchase">
+    <div class="db-modal-header">
+      <span class="db-modal-title" id="purchaseModalTitle">Detail Pembelian</span>
+      <button class="db-modal-close" id="btnClosePurchaseModal" aria-label="Tutup">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="db-modal-body">
+      <div class="db-purchase-hero">
+        <img id="purchaseModalImage" src="" alt="" class="db-purchase-hero-img">
+        <div class="db-purchase-hero-copy">
+          <div id="purchaseModalGame" class="db-purchase-game"></div>
+          <div id="purchaseModalItem" class="db-purchase-title"></div>
+        </div>
+      </div>
+
+      <div class="db-detail-grid">
+        <div class="db-detail-row">
+          <span>Order ID</span>
+          <strong id="purchaseModalOrderId"></strong>
+        </div>
+        <div class="db-detail-row">
+          <span>Penjual</span>
+          <strong id="purchaseModalSeller"></strong>
+        </div>
+        <div class="db-detail-row">
+          <span>Status</span>
+          <strong id="purchaseModalStatus"></strong>
+        </div>
+        <div class="db-detail-row">
+          <span>Metode</span>
+          <strong id="purchaseModalMethod"></strong>
+        </div>
+        <div class="db-detail-row">
+          <span>Tanggal Order</span>
+          <strong id="purchaseModalCreated"></strong>
+        </div>
+        <div class="db-detail-row">
+          <span>Tanggal Bayar</span>
+          <strong id="purchaseModalPaid"></strong>
+        </div>
+        <div class="db-detail-row db-detail-row--total">
+          <span>Total</span>
+          <strong id="purchaseModalTotal"></strong>
+        </div>
+      </div>
+
+      <div class="db-status-note" id="purchaseModalNote"></div>
+
+      <a href="#" target="_blank" class="db-proof-link" id="purchaseModalProofLink">
+        Lihat bukti pembayaran
+      </a>
+
+      <form id="paymentProofForm"
+            action="<?php echo $base_url; ?>pages/users/update_payment.php"
+            method="POST"
+            enctype="multipart/form-data"
+            class="db-payment-form">
+        <input type="hidden" name="order_id" id="pay_order_id">
+
+        <div class="db-form-grid">
+          <div class="db-form-group full">
+            <label for="pay_method">Metode Pembayaran</label>
+            <select name="payment_method" id="pay_method" required>
+              <option value="Transfer Bank">Transfer Bank</option>
+              <option value="E-Wallet">E-Wallet</option>
+              <option value="QRIS">QRIS</option>
+            </select>
+          </div>
+          <div class="db-form-group full">
+            <label for="payment_proof">Bukti Pembayaran</label>
+            <input type="file"
+                   name="payment_proof"
+                   id="payment_proof"
+                   accept="image/jpeg,image/png,image/webp,application/pdf"
+                   required>
+            <small class="db-form-help">Upload JPG, PNG, WEBP, atau PDF. Maksimal 2MB.</small>
+          </div>
+        </div>
+
+        <div class="db-form-actions">
+          <button type="button" class="btn btn-outline" id="btnCancelPurchaseModal" style="font-size:13px;padding:8px 16px;">
+            Tutup
+          </button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitPayment" style="font-size:13px;padding:8px 20px;">
+            Kirim Bukti Pembayaran
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 
 <!-- ══════════════════════════════════════════════

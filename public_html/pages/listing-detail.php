@@ -96,6 +96,8 @@ $imgSrc     = !empty($listing['image']) ? '../' . htmlspecialchars($listing['ima
 $gameImg    = !empty($listing['game_image']) ? '../' . htmlspecialchars($listing['game_image']) : null;
 $heroImg    = $imgSrc ?? $gameImg;
 $sellerInit = strtoupper(mb_substr($listing['seller_name'], 0, 1));
+$currentUserId = isset($_SESSION['user']) ? (int) $_SESSION['user']['ID_User'] : 0;
+$isOwnListing = $currentUserId > 0 && $currentUserId === (int) $listing['user_id'];
 
 $page_title  = htmlspecialchars($listing['title']) . ' — ThurzShop';
 $active_page = 'marketplace';
@@ -287,7 +289,7 @@ include '../includes/header.php';
       <div class="ld-price"><?php echo formatRp($listing['price']); ?></div>
 
       <!-- CTA buttons -->
-      <?php if (isset($_SESSION['user'])): ?>
+      <?php if (isset($_SESSION['user']) && !$isOwnListing): ?>
         <button class="ld-btn-buy" id="btnBeli">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -295,6 +297,13 @@ include '../includes/header.php';
             <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
           Beli Sekarang
+        </button>
+      <?php elseif ($isOwnListing): ?>
+        <button class="ld-btn-buy" type="button" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          Listing Milikmu
         </button>
       <?php else: ?>
         <a href="login.php" class="ld-btn-buy">
@@ -450,10 +459,22 @@ include '../includes/header.php';
         <span class="ld-modal-label">Total</span>
         <span class="ld-modal-price"><?php echo formatRp($listing['price']); ?></span>
       </div>
+      <div class="ld-modal-divider"></div>
+      <div class="ld-modal-field">
+        <label for="paymentMethod">Metode Pembayaran</label>
+        <select id="paymentMethod" name="payment_method">
+          <option value="Transfer Bank">Transfer Bank</option>
+          <option value="E-Wallet">E-Wallet</option>
+          <option value="QRIS">QRIS</option>
+        </select>
+      </div>
+      <div class="ld-modal-note">
+        Setelah order dibuat, upload bukti pembayaran dari Dashboard &gt; Transaksi &gt; Pembelian.
+      </div>
     </div>
     <div class="ld-modal-footer">
       <button class="ld-modal-btn-cancel" id="modalCancel">Batal</button>
-      <button class="ld-modal-btn-confirm" id="modalConfirm">
+      <button class="ld-modal-btn-confirm" id="modalConfirm" data-listing-id="<?php echo (int) $listing['listing_id']; ?>">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="20 6 9 17 4 12"/>
         </svg>

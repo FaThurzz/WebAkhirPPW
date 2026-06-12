@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 11 Jun 2026 pada 16.07
+-- Waktu pembuatan: 12 Jun 2026 pada 09.13
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -138,7 +138,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`ID_User`, `username`, `email`, `password`, `full_name`, `phone_number`, `role`, `status`, `created_at`) VALUES
 (1, 'fathur', 'faturyk65@gmail.com', '$2y$10$v.QPyCofLeus9w1D/M0Ol.EpjdUWh486rsu3RBxIiYlix.YFZ/G5C', 'Faturrohim Agni Darma', '089637186819', 'user', 'active', '2026-06-06 09:58:12'),
-(2, 'Thurz', 'faturyk833@gmail.com', '$2y$10$lRnX/jNsJNsINqZD9OZ2MubQUYpK63TLoKOvOzLkTSSh8e3889xje', 'Thurz', '81111111111', 'user', 'active', '2026-06-10 16:58:37');
+(2, 'Thurz', 'faturyk833@gmail.com', '$2y$10$lRnX/jNsJNsINqZD9OZ2MubQUYpK63TLoKOvOzLkTSSh8e3889xje', 'Thurz', '81111111111', 'admin', 'active', '2026-06-10 16:58:37');
 
 --
 -- Indexes for dumped tables

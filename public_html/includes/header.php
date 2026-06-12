@@ -1,6 +1,11 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 $base_url = '/ProjectAkhir/public_html/'; 
+$is_logged_in = isset($_SESSION['user']);
+$is_admin = $is_logged_in && ($_SESSION['user']['role'] ?? '') === 'admin';
+$profile_url = $is_logged_in
+    ? ($is_admin ? $base_url . 'pages/admin/dashboard.php' : $base_url . 'pages/users/dashboard.php')
+    : $base_url . 'pages/login.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -196,7 +201,7 @@ $base_url = '/ProjectAkhir/public_html/';
     <ul class="nav-links">
       <li><a href="<?php echo $base_url; ?>index.php" 
              class="<?php echo (isset($active_page) && $active_page == 'home') ? 'active' : ''; ?>">Home</a></li>
-      <li><a href="<?php echo $base_url; ?>pages/users/dashboard.php"
+      <li><a href="<?php echo $profile_url; ?>"
              class="<?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">Profile</a></li>
       <li><a href="#"
              class="<?php echo (isset($active_page) && $active_page == 'review') ? 'active' : ''; ?>">Reviews</a></li>
@@ -220,7 +225,7 @@ $base_url = '/ProjectAkhir/public_html/';
           </svg>
         </button>
       </form>
-      <?php if (isset($_SESSION['user'])): ?>
+      <?php if ($is_logged_in): ?>
         <?php
           $nav_user     = $_SESSION['user'];
           $nav_username = htmlspecialchars($nav_user['username']);
@@ -253,7 +258,7 @@ $base_url = '/ProjectAkhir/public_html/';
               </div>
             </div>
             <hr class="nav-dropdown-divider" />
-            <a href="<?php echo $base_url; ?>pages/users/dashboard.php" class="nav-dropdown-item" role="menuitem">
+            <a href="<?php echo $profile_url; ?>" class="nav-dropdown-item" role="menuitem">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Profil Saya
             </a>

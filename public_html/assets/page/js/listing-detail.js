@@ -12,14 +12,49 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalClose  = document.getElementById('modalClose');
   const modalCancel = document.getElementById('modalCancel');
   const modalConfirm = document.getElementById('modalConfirm');
+  const paymentMethod = document.getElementById('paymentMethod');
+
+  function showDetailToast(message, type = 'info') {
+    const existing = document.getElementById('ld-toast');
+    if (existing) existing.remove();
+
+    const colors = {
+      success: '#12b76a',
+      error: '#dc2626',
+      info: 'var(--blue)',
+    };
+
+    const toast = document.createElement('div');
+    toast.id = 'ld-toast';
+    toast.style.cssText = `
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      background: ${colors[type] || colors.info};
+      color: #fff; padding: 12px 18px;
+      border-radius: 10px; font-family: 'Outfit', sans-serif;
+      font-size: 14px; font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      max-width: 340px;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.transition = 'opacity .3s, transform .3s';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
 
   function openModal() {
+    if (!overlay) return;
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
   }
 
   function closeModal() {
+    if (!overlay) return;
     overlay.classList.remove('open');
     overlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
@@ -41,12 +76,43 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && overlay?.classList.contains('open')) closeModal();
   });
 
-  // Confirm buy — placeholder (integrate with backend as needed)
   if (modalConfirm) {
-    modalConfirm.addEventListener('click', () => {
-      closeModal();
-      if (window.showToast) {
-        window.showToast('Fitur pembelian segera hadir! Hubungi penjual untuk sementara.', 'info');
+    modalConfirm.addEventListener('click', async () => {
+      const listingId = modalConfirm.dataset.listingId;
+      const method = paymentMethod ? paymentMethod.value : '';
+      const original = modalConfirm.innerHTML;
+
+      modalConfirm.disabled = true;
+      modalConfirm.innerHTML = '<span>Memproses...</span>';
+
+      try {
+        const res = await fetch('create_order.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            listing_id: listingId,
+            payment_method: method,
+          }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          closeModal();
+          sessionStorage.setItem('db_panel', 'transaksi');
+          sessionStorage.setItem('db_purchase_tab', 'pembelian');
+          showDetailToast(data.message || 'Order berhasil dibuat.', 'success');
+          setTimeout(() => {
+            window.location.href = data.redirect_url || 'users/dashboard.php';
+          }, 700);
+        } else {
+          showDetailToast(data.message || 'Gagal membuat order.', 'error');
+          modalConfirm.disabled = false;
+          modalConfirm.innerHTML = original;
+        }
+      } catch {
+        showDetailToast('Gagal terhubung ke server.', 'error');
+        modalConfirm.disabled = false;
+        modalConfirm.innerHTML = original;
       }
     });
   }

@@ -122,9 +122,6 @@ $stmt = mysqli_prepare($conn,
         (user_id, game_id, `id`, title, description, server, image_url, price, level, rank, account_login_type, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ready', NOW())"
 );
-
-// urutan: user_id, game_id, id_akun, title, description, server, image_url, price, level, rank, account_login_type
-// type:   i        i        s        s      s             s       s          d      i      s     s
 mysqli_stmt_bind_param(
     $stmt,
     'iisssssdiss',

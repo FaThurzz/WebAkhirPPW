@@ -39,16 +39,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabs      = document.querySelectorAll('.db-tab[data-tab]');
   const tabPanels = document.querySelectorAll('.db-tab-panel');
 
+  function switchTransaksiTab(tabName) {
+    tabs.forEach(t => t.classList.remove('active'));
+    tabPanels.forEach(p => p.classList.remove('active'));
+
+    const tab = document.querySelector(`.db-tab[data-tab="${tabName}"]`);
+    if (!tab && tabName !== 'penjualan') {
+      switchTransaksiTab('penjualan');
+      return;
+    }
+    if (!tab) return;
+
+    tab.classList.add('active');
+    const tp = document.getElementById('tab-' + tabName);
+    if (tp) tp.classList.add('active');
+    sessionStorage.setItem('db_purchase_tab', tabName);
+  }
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tabPanels.forEach(p => p.classList.remove('active'));
-
-      tab.classList.add('active');
-      const tp = document.getElementById('tab-' + tab.dataset.tab);
-      if (tp) tp.classList.add('active');
+      switchTransaksiTab(tab.dataset.tab);
     });
   });
+
+  switchTransaksiTab(sessionStorage.getItem('db_purchase_tab') || 'penjualan');
 
   /* ── Image upload: preview & drag-drop ───────── */
   const imageInput    = document.getElementById('lst_image');
@@ -215,6 +229,130 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
   });
+
+  /* -- Modal detail pembelian -- */
+  const purchaseModal = document.getElementById('purchaseDetailModal');
+  const btnClosePurchaseModal = document.getElementById('btnClosePurchaseModal');
+  const btnCancelPurchaseModal = document.getElementById('btnCancelPurchaseModal');
+  const paymentProofForm = document.getElementById('paymentProofForm');
+  const paymentProofInput = document.getElementById('payment_proof');
+  const purchaseProofLink = document.getElementById('purchaseModalProofLink');
+
+  const purchaseFields = {
+    image: document.getElementById('purchaseModalImage'),
+    game: document.getElementById('purchaseModalGame'),
+    item: document.getElementById('purchaseModalItem'),
+    orderId: document.getElementById('purchaseModalOrderId'),
+    seller: document.getElementById('purchaseModalSeller'),
+    status: document.getElementById('purchaseModalStatus'),
+    method: document.getElementById('purchaseModalMethod'),
+    created: document.getElementById('purchaseModalCreated'),
+    paid: document.getElementById('purchaseModalPaid'),
+    total: document.getElementById('purchaseModalTotal'),
+    note: document.getElementById('purchaseModalNote'),
+    payOrderId: document.getElementById('pay_order_id'),
+    payMethod: document.getElementById('pay_method'),
+  };
+
+  const purchaseNotes = {
+    pending: 'Upload bukti pembayaran agar admin dapat mengecek dan mengonfirmasi transaksi.',
+    paid: 'Bukti pembayaran sudah dikirim. Tunggu admin mengonfirmasi transaksi.',
+    confirmed: 'Transaksi sudah dikonfirmasi. Hubungi admin jika detail akun belum diterima.',
+    cancelled: 'Order ini dibatalkan dan tidak bisa dilanjutkan.',
+  };
+
+  function openPurchaseModal(data) {
+    if (!purchaseModal) return;
+
+    if (purchaseFields.image) {
+      purchaseFields.image.src = data.image || '';
+      purchaseFields.image.alt = data.title || '';
+    }
+    if (purchaseFields.game) purchaseFields.game.textContent = data.game || '-';
+    if (purchaseFields.item) purchaseFields.item.textContent = data.title || '-';
+    if (purchaseFields.orderId) purchaseFields.orderId.textContent = '#' + (data.orderId || '-');
+    if (purchaseFields.seller) purchaseFields.seller.textContent = data.seller || '-';
+    if (purchaseFields.status) purchaseFields.status.textContent = data.statusLabel || '-';
+    if (purchaseFields.method) purchaseFields.method.textContent = data.method || '-';
+    if (purchaseFields.created) purchaseFields.created.textContent = data.created || '-';
+    if (purchaseFields.paid) purchaseFields.paid.textContent = data.paid || '-';
+    if (purchaseFields.total) purchaseFields.total.textContent = data.total || '-';
+    if (purchaseFields.note) purchaseFields.note.textContent = purchaseNotes[data.status] || purchaseNotes.pending;
+    if (purchaseFields.payOrderId) purchaseFields.payOrderId.value = data.orderId || '';
+    if (purchaseFields.payMethod) purchaseFields.payMethod.value = data.method || 'Transfer Bank';
+
+    if (paymentProofInput) paymentProofInput.value = '';
+
+    if (purchaseProofLink) {
+      purchaseProofLink.href = data.proofUrl || '#';
+      purchaseProofLink.style.display = data.proofUrl ? 'inline-flex' : 'none';
+    }
+
+    if (paymentProofForm) {
+      paymentProofForm.style.display = data.status === 'pending' ? '' : 'none';
+    }
+
+    purchaseModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePurchaseModal() {
+    if (!purchaseModal) return;
+    purchaseModal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.db-purchase-detail-btn').forEach(btn => {
+    btn.addEventListener('click', () => openPurchaseModal(btn.dataset));
+  });
+
+  if (btnClosePurchaseModal) btnClosePurchaseModal.addEventListener('click', closePurchaseModal);
+  if (btnCancelPurchaseModal) btnCancelPurchaseModal.addEventListener('click', closePurchaseModal);
+
+  if (purchaseModal) {
+    purchaseModal.addEventListener('click', (e) => {
+      if (e.target === purchaseModal) closePurchaseModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePurchaseModal();
+  });
+
+  if (paymentProofForm) {
+    paymentProofForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitPayment');
+      const orig = btn ? btn.textContent : '';
+      if (btn) {
+        btn.textContent = 'Mengirim...';
+        btn.disabled = true;
+      }
+
+      try {
+        const res = await fetch(paymentProofForm.action, {
+          method: 'POST',
+          body: new FormData(paymentProofForm),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          closePurchaseModal();
+          showToast(data.message || 'Bukti pembayaran berhasil dikirim.', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast(data.message || 'Gagal mengirim bukti pembayaran.', 'error');
+        }
+      } catch {
+        showToast('Gagal terhubung ke server.', 'error');
+      } finally {
+        if (btn) {
+          btn.textContent = orig;
+          btn.disabled = false;
+        }
+      }
+    });
+  }
 
   /* ── Form profil: toggle edit ─────────────────── */
   const btnEditProfile  = document.getElementById('btnEditProfile');

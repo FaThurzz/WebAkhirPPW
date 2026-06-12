@@ -202,6 +202,13 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0,88,190,.3);
 }
+.ld-btn-buy:disabled {
+  background: var(--bg3);
+  color: var(--muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 .ld-btn-chat {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 11px;
@@ -322,6 +329,41 @@
 .ld-modal-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 .ld-modal-total .ld-modal-label { font-size: 15px; font-weight: 700; color: var(--text); }
 .ld-modal-price { font-size: 24px; font-weight: 800; color: var(--blue); }
+.ld-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.ld-modal-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ld-modal-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  outline: none;
+}
+.ld-modal-field select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(26,86,255,.1);
+}
+.ld-modal-note {
+  background: var(--blue-lt);
+  color: var(--blue);
+  border: 1px solid rgba(0,88,190,.16);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
 
 .ld-modal-footer {
   display: flex; gap: 10px;
