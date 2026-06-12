@@ -434,7 +434,14 @@ include '../includes/header.php';
 <div class="ld-modal-overlay" id="modalBuy" aria-hidden="true">
   <div class="ld-modal">
     <div class="ld-modal-header">
-      <h3>Konfirmasi Pembelian</h3>
+      <h3>
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        Konfirmasi Pembelian
+      </h3>
       <button class="ld-modal-close" id="modalClose" aria-label="Tutup">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -442,34 +449,80 @@ include '../includes/header.php';
       </button>
     </div>
     <div class="ld-modal-body">
-      <div class="ld-modal-item">
-        <span class="ld-modal-label">Akun</span>
-        <span class="ld-modal-value"><?php echo htmlspecialchars($listing['title']); ?></span>
+
+      <!-- Ringkasan akun -->
+      <div class="ld-modal-summary">
+        <?php if ($heroImg): ?>
+          <img src="<?php echo $heroImg; ?>" alt="" class="ld-modal-thumb"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="ld-modal-thumb-fallback" style="display:none">🎮</div>
+        <?php else: ?>
+          <div class="ld-modal-thumb-fallback">🎮</div>
+        <?php endif; ?>
+        <div class="ld-modal-summary-info">
+          <div class="ld-modal-summary-title"><?php echo htmlspecialchars($listing['title']); ?></div>
+          <div class="ld-modal-summary-game">
+            <?php if (!empty($listing['rank'])): ?>
+              <span class="ld-modal-summary-chip">⭐ <?php echo htmlspecialchars($listing['rank']); ?></span>
+            <?php endif; ?>
+            <span class="ld-modal-summary-chip"><?php echo htmlspecialchars($listing['game']); ?></span>
+          </div>
+        </div>
       </div>
+
       <div class="ld-modal-item">
-        <span class="ld-modal-label">Game</span>
-        <span class="ld-modal-value"><?php echo htmlspecialchars($listing['game']); ?></span>
-      </div>
-      <div class="ld-modal-item">
-        <span class="ld-modal-label">Penjual</span>
+        <span class="ld-modal-label">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Penjual
+        </span>
         <span class="ld-modal-value"><?php echo htmlspecialchars($listing['seller_name']); ?></span>
       </div>
+      <div class="ld-modal-item">
+        <span class="ld-modal-label">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Pembeli
+        </span>
+        <span class="ld-modal-value">
+          <?php echo isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']['username'] ?? 'Pembeli') : '—'; ?>
+        </span>
+      </div>
+
       <div class="ld-modal-divider"></div>
+
       <div class="ld-modal-item ld-modal-total">
-        <span class="ld-modal-label">Total</span>
+        <span class="ld-modal-label">Total Pembayaran</span>
         <span class="ld-modal-price"><?php echo formatRp($listing['price']); ?></span>
       </div>
+
       <div class="ld-modal-divider"></div>
+
       <div class="ld-modal-field">
-        <label for="paymentMethod">Metode Pembayaran</label>
-        <select id="paymentMethod" name="payment_method">
-          <option value="Transfer Bank">Transfer Bank</option>
-          <option value="E-Wallet">E-Wallet</option>
-          <option value="QRIS">QRIS</option>
-        </select>
+        <label>Metode Pembayaran</label>
+        <div class="ld-pay-options" id="paymentMethodGroup" role="radiogroup">
+          <label class="ld-pay-option selected">
+            <input type="radio" name="payment_method" value="Transfer Bank" checked>
+            <span class="ld-pay-icon">🏦</span>
+            <span class="ld-pay-name">Transfer Bank</span>
+            <svg class="ld-pay-check" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </label>
+          <label class="ld-pay-option">
+            <input type="radio" name="payment_method" value="E-Wallet">
+            <span class="ld-pay-icon">📱</span>
+            <span class="ld-pay-name">E-Wallet</span>
+            <svg class="ld-pay-check" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </label>
+          <label class="ld-pay-option">
+            <input type="radio" name="payment_method" value="QRIS">
+            <span class="ld-pay-icon">🔳</span>
+            <span class="ld-pay-name">QRIS</span>
+            <svg class="ld-pay-check" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </label>
+        </div>
       </div>
+
       <div class="ld-modal-note">
-        Setelah order dibuat, upload bukti pembayaran dari Dashboard &gt; Transaksi &gt; Pembelian.
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Setelah order dibuat, upload bukti pembayaran dari <strong>Dashboard &gt; Transaksi &gt; Pembelian</strong>.</span>
       </div>
     </div>
     <div class="ld-modal-footer">

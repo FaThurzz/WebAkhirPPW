@@ -387,6 +387,87 @@
 }
 .ld-modal-btn-confirm:hover { background: var(--blue-dk); }
 
+/* ── Modal: account summary ──────────────────── */
+.ld-modal-summary {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.ld-modal-thumb {
+  width: 52px; height: 52px; border-radius: 10px;
+  object-fit: cover; flex-shrink: 0;
+}
+.ld-modal-thumb-fallback {
+  width: 52px; height: 52px; border-radius: 10px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  background: var(--bg3, #eef1f6);
+}
+.ld-modal-summary-info { min-width: 0; }
+.ld-modal-summary-title {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin-bottom: 4px;
+}
+.ld-modal-summary-game { display: flex; gap: 6px; flex-wrap: wrap; }
+.ld-modal-summary-chip {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.ld-modal-label {
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── Modal: payment method cards ─────────────── */
+.ld-pay-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ld-pay-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  position: relative;
+}
+.ld-pay-option:hover { background: var(--bg2); }
+.ld-pay-option.selected {
+  border-color: var(--blue);
+  background: var(--blue-lt);
+}
+.ld-pay-option input[type="radio"] {
+  position: absolute; opacity: 0; pointer-events: none;
+}
+.ld-pay-icon { font-size: 18px; }
+.ld-pay-name {
+  flex: 1; font-size: 14px; font-weight: 600; color: var(--text);
+}
+.ld-pay-check {
+  color: var(--blue);
+  opacity: 0;
+  transform: scale(.6);
+  transition: opacity .15s, transform .15s;
+}
+.ld-pay-option.selected .ld-pay-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ld-modal-note {
+  display: flex; align-items: flex-start; gap: 8px;
+}
+
 /* ── Shared listing-card styles (reused from marketplace) ── */
 /* These are already in style.css / marketplace.css, but
    keep selectors scoped to .ld-related-grid for safe override */

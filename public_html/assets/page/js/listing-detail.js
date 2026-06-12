@@ -12,7 +12,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalClose  = document.getElementById('modalClose');
   const modalCancel = document.getElementById('modalCancel');
   const modalConfirm = document.getElementById('modalConfirm');
-  const paymentMethod = document.getElementById('paymentMethod');
+  const paymentGroup = document.getElementById('paymentMethodGroup');
+
+  /* ── Payment method radio cards ──────────────── */
+  if (paymentGroup) {
+    const options = paymentGroup.querySelectorAll('.ld-pay-option');
+    options.forEach(opt => {
+      opt.addEventListener('click', () => {
+        options.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        const input = opt.querySelector('input[type="radio"]');
+        if (input) input.checked = true;
+      });
+    });
+  }
+
+  function getSelectedPaymentMethod() {
+    if (!paymentGroup) return '';
+    const checked = paymentGroup.querySelector('input[type="radio"]:checked');
+    return checked ? checked.value : '';
+  }
 
   function showDetailToast(message, type = 'info') {
     const existing = document.getElementById('ld-toast');
@@ -79,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (modalConfirm) {
     modalConfirm.addEventListener('click', async () => {
       const listingId = modalConfirm.dataset.listingId;
-      const method = paymentMethod ? paymentMethod.value : '';
+      const method = getSelectedPaymentMethod();
       const original = modalConfirm.innerHTML;
 
       modalConfirm.disabled = true;

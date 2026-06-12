@@ -1,767 +1,604 @@
 <?php
 /** @var mysqli $conn */
-// ── Auth guard ──────────────────────────────────────────────────────────────
 if (session_status() === PHP_SESSION_NONE) session_start();
+
 if (!isset($_SESSION['user'])) {
-    header('Location: ../../pages/login.php');
+    header('Location: ../login.php');
     exit;
 }
 
-// ── Page config ─────────────────────────────────────────────────────────────
-$page_title  = 'Dashboard Saya — ThurzShop';
-$active_page = 'profile';
+if ($_SESSION['user']['role'] === 'admin') {
+    header('Location: ../admin/dashboard.php');
+    exit;
+}
 
-// ── DB & user ───────────────────────────────────────────────────────────────
-include '../../includes/db.php';
-include '../../includes/header.php';
+require_once '../../includes/db.php';
 
 $user_id = (int) $_SESSION['user']['ID_User'];
 
-// ── Fetch: user detail (fresh from DB) ──────────────────────────────────────
-$stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE ID_User = ?");
-mysqli_stmt_bind_param($stmt, 'i', $user_id);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$user   = mysqli_fetch_assoc($result);
+// ── Ambil data user terbaru ──────────────────────────────────────────────
+$uStmt = mysqli_prepare($conn, "SELECT * FROM users WHERE ID_User = ?");
+mysqli_stmt_bind_param($uStmt, 'i', $user_id);
+mysqli_stmt_execute($uStmt);
+$user = mysqli_fetch_assoc(mysqli_stmt_get_result($uStmt));
+mysqli_stmt_close($uStmt);
+$_SESSION['user'] = $user;
 
-// Kalau user tidak ditemukan di DB, paksa logout
-if (!$user) {
-    session_destroy();
-    header('Location: ../../pages/login.php');
-    exit;
-}
+// ── Stats ────────────────────────────────────────────────────────────────
+$statStmt = mysqli_prepare($conn,
+    "SELECT COUNT(*) AS total_listing,
+            SUM(status='ready') AS listing_ready,
+            SUM(status='sold')  AS listing_sold
+     FROM account_listing WHERE user_id = ?");
+mysqli_stmt_bind_param($statStmt, 'i', $user_id);
+mysqli_stmt_execute($statStmt);
+$stats = mysqli_fetch_assoc(mysqli_stmt_get_result($statStmt));
+mysqli_stmt_close($statStmt);
 
-// ── Fetch: listings milik user (Penjualan) ───────────────────────────────────
-$stmt2 = mysqli_prepare($conn,
-    "SELECT al.*, g.name AS game_name, g.image_url AS game_image
+$salesStmt = mysqli_prepare($conn,
+    "SELECT COUNT(*) AS total_sales, COALESCE(SUM(total_price),0) AS total_income
+     FROM orders WHERE seller_id = ? AND order_status = 'confirmed'");
+mysqli_stmt_bind_param($salesStmt, 'i', $user_id);
+mysqli_stmt_execute($salesStmt);
+$salesStats = mysqli_fetch_assoc(mysqli_stmt_get_result($salesStmt));
+mysqli_stmt_close($salesStmt);
+
+$buyCountStmt = mysqli_prepare($conn,
+    "SELECT COUNT(*) AS total_purchases FROM orders WHERE user_id = ? AND order_status != 'cancelled'");
+mysqli_stmt_bind_param($buyCountStmt, 'i', $user_id);
+mysqli_stmt_execute($buyCountStmt);
+$buyStats = mysqli_fetch_assoc(mysqli_stmt_get_result($buyCountStmt));
+mysqli_stmt_close($buyCountStmt);
+
+// Total belanja (memakai fungsi DB fn_user_total_belanja)
+$belanjaStmt = mysqli_prepare($conn, "SELECT fn_user_total_belanja(?) AS total_belanja");
+mysqli_stmt_bind_param($belanjaStmt, 'i', $user_id);
+mysqli_stmt_execute($belanjaStmt);
+$belanjaRow = mysqli_fetch_assoc(mysqli_stmt_get_result($belanjaStmt));
+$buyStats['total_belanja'] = $belanjaRow['total_belanja'] ?? 0;
+mysqli_stmt_close($belanjaStmt);
+
+// ── Listing milik user ───────────────────────────────────────────────────
+$lStmt = mysqli_prepare($conn,
+    "SELECT al.*, g.name AS game_name
      FROM account_listing al
      JOIN games g ON al.game_id = g.id
-     WHERE al.user_id = ?
-     ORDER BY al.created_at DESC"
-);
-mysqli_stmt_bind_param($stmt2, 'i', $user_id);
-mysqli_stmt_execute($stmt2);
-$listings = mysqli_fetch_all(mysqli_stmt_get_result($stmt2), MYSQLI_ASSOC);
+     WHERE al.user_id = ? ORDER BY al.created_at DESC");
+mysqli_stmt_bind_param($lStmt, 'i', $user_id);
+mysqli_stmt_execute($lStmt);
+$myListings = mysqli_fetch_all(mysqli_stmt_get_result($lStmt), MYSQLI_ASSOC);
+mysqli_stmt_close($lStmt);
 
-$total_listings = count($listings);
-$sold_count     = count(array_filter($listings, fn($l) => $l['status'] === 'sold'));
-$active_count   = $total_listings - $sold_count;
-
-// ── Fetch: pembelian milik user ──────────────────────────────────────────────
-$stmt3 = mysqli_prepare($conn,
-    "SELECT o.*, al.title, al.rank, al.level, al.image_url AS listing_image,
-            g.name AS game_name, g.image_url AS game_image,
-            seller.username AS seller_name,
-            p.payment_status, p.payment_method, p.payment_proof, p.paid_at
+// ── Order penjualan ──────────────────────────────────────────────────────
+$sellOrdStmt = mysqli_prepare($conn,
+    "SELECT o.*, al.title, al.image_url, al.price,
+            g.name AS game_name, u.username AS buyer_name,
+            p.payment_method, p.payment_status, p.payment_proof, p.paid_at
      FROM orders o
      JOIN account_listing al ON o.listing_id = al.listing_id
      JOIN games g ON al.game_id = g.id
-     LEFT JOIN users seller ON al.user_id = seller.ID_User
+     JOIN users u ON o.user_id = u.ID_User
      LEFT JOIN payment p ON o.order_id = p.order_id
-     WHERE o.user_id = ?
-     ORDER BY o.created_at DESC"
-);
-mysqli_stmt_bind_param($stmt3, 'i', $user_id);
-mysqli_stmt_execute($stmt3);
-$purchases = mysqli_fetch_all(mysqli_stmt_get_result($stmt3), MYSQLI_ASSOC);
+     WHERE o.seller_id = ? ORDER BY o.created_at DESC");
+mysqli_stmt_bind_param($sellOrdStmt, 'i', $user_id);
+mysqli_stmt_execute($sellOrdStmt);
+$sellOrders = mysqli_fetch_all(mysqli_stmt_get_result($sellOrdStmt), MYSQLI_ASSOC);
+mysqli_stmt_close($sellOrdStmt);
 
-$purchase_count     = count($purchases);
-$confirmed_count    = count(array_filter($purchases, fn($p) => $p['payment_status'] === 'confirmed'));
+// ── Order pembelian (memakai VIEW v_order_detail) ───────────────────────
+$buyOrdStmt = mysqli_prepare($conn,
+    "SELECT v.order_id, v.listing_id, v.total_price, al.price, al.image_url,
+            v.order_status, v.order_created_at AS created_at,
+            v.listing_title AS title, v.game_name,
+            v.seller_username AS seller_name,
+            v.payment_method, v.payment_status, v.payment_proof, v.paid_at
+     FROM v_order_detail v
+     LEFT JOIN account_listing al ON al.listing_id = v.listing_id
+     WHERE v.buyer_id = ? ORDER BY v.order_created_at DESC");
+mysqli_stmt_bind_param($buyOrdStmt, 'i', $user_id);
+mysqli_stmt_execute($buyOrdStmt);
+$buyOrders = mysqli_fetch_all(mysqli_stmt_get_result($buyOrdStmt), MYSQLI_ASSOC);
+mysqli_stmt_close($buyOrdStmt);
 
-// ── Fetch: games list (untuk form tambah listing) ────────────────────────────
-$games_result = mysqli_query($conn, "SELECT id, name FROM games ORDER BY name ASC");
-$games_list   = mysqli_fetch_all($games_result, MYSQLI_ASSOC);
+// ── Games untuk dropdown ─────────────────────────────────────────────────
+$games = mysqli_fetch_all(mysqli_query($conn, "SELECT id, name FROM games ORDER BY name ASC"), MYSQLI_ASSOC);
 
-// ── Helper: format rupiah ────────────────────────────────────────────────────
-function rupiah(float $n): string {
-    return 'Rp ' . number_format($n, 0, ',', '.');
+// ── Helpers ──────────────────────────────────────────────────────────────
+function formatRp($n) { return 'Rp ' . number_format((float)$n, 0, ',', '.'); }
+function statusLabel($s) {
+    return ['pending'=>'Menunggu','paid'=>'Dibayar','confirmed'=>'Dikonfirmasi','cancelled'=>'Dibatalkan'][$s] ?? ucfirst($s);
+}
+function statusBadge($s) { return "badge-{$s}"; }
+function timeAgo($dt) {
+    $d = time() - strtotime($dt);
+    if ($d < 60) return 'Baru saja';
+    if ($d < 3600) return floor($d/60).' menit lalu';
+    if ($d < 86400) return floor($d/3600).' jam lalu';
+    if ($d < 2592000) return floor($d/86400).' hari lalu';
+    return date('d M Y', strtotime($dt));
 }
 
-// ── Helper: status badge HTML ────────────────────────────────────────────────
-function listing_badge(string $status): string {
-    return match ($status) {
-        'sold'  => '<span class="badge badge-sold">● Terjual</span>',
-        default => '<span class="badge badge-ready">● Tersedia</span>',
-    };
-}
-function order_badge(string $status): string {
-    return match ($status) {
-        'confirmed' => '<span class="badge badge-confirmed">✓ Terkonfirmasi</span>',
-        'paid'      => '<span class="badge badge-paid">● Dibayar</span>',
-        'cancelled' => '<span class="badge badge-cancelled">✕ Dibatalkan</span>',
-        default     => '<span class="badge badge-pending">◌ Menunggu</span>',
-    };
-}
-function order_status_label(string $status): string {
-    return match ($status) {
-        'confirmed' => 'Terkonfirmasi',
-        'paid'      => 'Dibayar',
-        'cancelled' => 'Dibatalkan',
-        default     => 'Menunggu Pembayaran',
-    };
-}
+$page_title  = 'Dashboard — ThurzShop';
+$active_page = 'profile';
+$userInitial = strtoupper(mb_substr($user['username'], 0, 1));
 
-$initial = strtoupper(mb_substr($user['username'], 0, 2));
+include '../../includes/header.php';
 ?>
+<link rel="stylesheet" href="../../assets/page/css/userdashboard.css">
+<style>
+.db-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:var(--space-2) var(--space-3);border-top:1px solid var(--border)}
+.lst-image-dropzone{border:2px dashed var(--border);border-radius:var(--radius-md);padding:28px 20px;text-align:center;cursor:pointer;background:var(--bg);transition:border-color .2s,background .2s;position:relative}
+.lst-image-dropzone:hover{border-color:var(--blue);background:var(--blue-lt)}
+.lst-drop-icon{font-size:30px;margin-bottom:8px}
+.lst-drop-text{font-size:13px;color:var(--muted);line-height:1.6}
+.lst-drop-text strong{color:var(--blue)}
+#lstImagePreview{width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius);display:none}
+#lstImageError{color:#dc2626;font-size:12px;margin-top:4px;display:none}
+</style>
+</head><body>
 
-<!-- ── Dashboard CSS & page-specific link ──────────────────────────────────── -->
-<link rel="stylesheet" href="<?php echo $base_url; ?>assets/page/css/userdashboard.css" />
-
-<!-- ══════════════════════════════════════════════
-     DASHBOARD WRAPPER
-══════════════════════════════════════════════ -->
 <div class="dashboard-wrapper">
 
-  <!-- ══════════ SIDEBAR ══════════ -->
-  <aside class="db-sidebar">
+<!-- ══ SIDEBAR ════════════════════════════════════════════════════════════ -->
+<aside class="db-sidebar">
+  <div class="db-profile-card">
+    <div class="db-avatar"><?php echo $userInitial; ?></div>
+    <div class="db-profile-name"><?php echo htmlspecialchars($user['username']); ?></div>
+    <div class="db-profile-email"><?php echo htmlspecialchars($user['email']); ?></div>
+    <span class="db-profile-badge">
+      <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Member Aktif
+    </span>
+  </div>
+  <nav class="db-nav">
+    <button class="db-nav-item" data-panel="overview">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </button>
+    <button class="db-nav-item" data-panel="transaksi">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      Transaksi
+    </button>
+    <button class="db-nav-item" data-panel="listing">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Listing Saya
+    </button>
+    <button class="db-nav-item" data-panel="profil">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profil
+    </button>
+    <hr class="db-nav-divider">
+    <a href="../logout.php" class="db-nav-item db-nav-item--danger" style="text-decoration:none">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Keluar
+    </a>
+  </nav>
+</aside>
 
-    <!-- Profile card -->
-    <div class="db-profile-card">
-      <div class="db-avatar"><?php echo htmlspecialchars($initial); ?></div>
-      <div class="db-profile-name"><?php echo htmlspecialchars($user['username']); ?></div>
-      <div class="db-profile-email"><?php echo htmlspecialchars($user['email']); ?></div>
-      <span class="db-profile-badge">
-        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-        Aktif
-      </span>
+<!-- ══ MAIN ════════════════════════════════════════════════════════════════ -->
+<main class="db-main">
+
+<!-- ── PANEL: OVERVIEW ──────────────────────────────────────────────────── -->
+<div class="db-panel" id="panel-overview">
+
+  <div class="db-stats">
+    <div class="db-stat"><div class="db-stat-value blue"><?php echo (int)$stats['total_listing']; ?></div><div class="db-stat-label">Total Listing</div></div>
+    <div class="db-stat"><div class="db-stat-value green"><?php echo (int)$salesStats['total_sales']; ?></div><div class="db-stat-label">Akun Terjual</div></div>
+    <div class="db-stat"><div class="db-stat-value orange"><?php echo (int)$buyStats['total_purchases']; ?></div><div class="db-stat-label">Pembelian</div></div>
+    <div class="db-stat"><div class="db-stat-value blue"><?php echo formatRp((float)$buyStats['total_belanja']); ?></div><div class="db-stat-label">Total Belanja</div></div>
+  </div>
+
+  <div class="db-card">
+    <div class="db-card-header">
+      <div class="db-card-title"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Listing Terbaru</div>
+      <button class="db-nav-item" data-panel="listing" style="width:auto;padding:6px 14px;font-size:12px">Lihat Semua</button>
+    </div>
+    <?php if (empty($myListings)): ?>
+      <div class="db-empty"><div class="db-empty-icon">📦</div><strong>Belum ada listing</strong><p>Mulai jual akun game kamu!</p></div>
+    <?php else: ?>
+      <div class="db-item-list">
+        <?php foreach (array_slice($myListings, 0, 3) as $lst):
+          $imgSrc = !empty($lst['image_url']) ? '../../'.htmlspecialchars($lst['image_url']) : null; ?>
+        <div class="db-item">
+          <?php if ($imgSrc): ?><img src="<?php echo $imgSrc; ?>" class="db-item-thumb" onerror="this.style.display='none'">
+          <?php else: ?><div class="db-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px">🎮</div><?php endif; ?>
+          <div class="db-item-info">
+            <div class="db-item-title"><?php echo htmlspecialchars($lst['title']); ?></div>
+            <div class="db-item-meta"><span><?php echo htmlspecialchars($lst['game_name']); ?></span><span>·</span><span><?php echo timeAgo($lst['created_at']); ?></span></div>
+          </div>
+          <span class="badge badge-<?php echo $lst['status']; ?>"><?php echo $lst['status']==='ready'?'Tersedia':'Terjual'; ?></span>
+          <div class="db-item-price"><?php echo formatRp($lst['price']); ?></div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <div class="db-card">
+    <div class="db-card-header">
+      <div class="db-card-title"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Pembelian Terbaru</div>
+      <button class="db-nav-item" data-panel="transaksi" style="width:auto;padding:6px 14px;font-size:12px">Lihat Semua</button>
+    </div>
+    <?php if (empty($buyOrders)): ?>
+      <div class="db-empty"><div class="db-empty-icon">🛒</div><strong>Belum ada pembelian</strong><p>Temukan akun game impianmu di marketplace!</p></div>
+    <?php else: ?>
+      <div class="db-item-list">
+        <?php foreach (array_slice($buyOrders, 0, 3) as $ord):
+          $imgSrc = !empty($ord['image_url']) ? '../../'.htmlspecialchars($ord['image_url']) : null; ?>
+        <div class="db-item">
+          <?php if ($imgSrc): ?><img src="<?php echo $imgSrc; ?>" class="db-item-thumb" onerror="this.style.display='none'">
+          <?php else: ?><div class="db-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px">🎮</div><?php endif; ?>
+          <div class="db-item-info">
+            <div class="db-item-title"><?php echo htmlspecialchars($ord['title']); ?></div>
+            <div class="db-item-meta"><span><?php echo htmlspecialchars($ord['game_name']); ?></span><span>·</span><span>#<?php echo $ord['order_id']; ?></span></div>
+          </div>
+          <span class="badge <?php echo statusBadge($ord['order_status']); ?>"><?php echo statusLabel($ord['order_status']); ?></span>
+          <div class="db-item-price"><?php echo formatRp($ord['total_price']); ?></div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+
+</div><!-- /panel-overview -->
+
+
+<!-- ── PANEL: TRANSAKSI ──────────────────────────────────────────────────── -->
+<div class="db-panel" id="panel-transaksi">
+  <div class="db-card">
+    <div class="db-card-header">
+      <div class="db-card-title"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Riwayat Transaksi</div>
+    </div>
+    <div class="db-tabs" style="margin-bottom:var(--space-2)">
+      <button class="db-tab active" data-tab="penjualan">Penjualan</button>
+      <button class="db-tab" data-tab="pembelian">Pembelian</button>
     </div>
 
-    <!-- Sidebar navigation -->
-    <nav class="db-nav" aria-label="Dashboard menu">
-      <button class="db-nav-item" data-panel="overview">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Overview
-      </button>
-      <button class="db-nav-item" data-panel="transaksi">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>
-        Transaksi
-      </button>
-      <button class="db-nav-item" data-panel="profil">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Profil Saya
-      </button>
-      <hr class="db-nav-divider">
-      <a href="<?php echo $base_url; ?>pages/logout.php" class="db-nav-item db-nav-item--danger">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        Keluar
-      </a>
-    </nav>
-
-  </aside>
-  <!-- /SIDEBAR -->
-
-  <!-- ══════════ MAIN ══════════ -->
-  <main class="db-main">
-
-    <!-- ─────────────── PANEL: OVERVIEW ─────────────── -->
-    <section id="panel-overview" class="db-panel">
-
-      <div class="db-card">
-        <div class="db-card-header">
-          <span class="db-card-title">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Selamat datang, <?php echo htmlspecialchars($user['full_name'] ?: $user['username']); ?>!
-          </span>
-          <span style="font-size:12px;color:var(--muted);">
-            Bergabung: <?php echo date('d M Y', strtotime($user['created_at'])); ?>
-          </span>
-        </div>
-        <div class="db-alert db-alert-info">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Pantau semua aktivitas jual-beli akun game kamu di sini. Gunakan menu <strong>Transaksi</strong> untuk melihat detail penjualan dan pembelian.
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div class="db-stats">
-        <div class="db-stat">
-          <div class="db-stat-value blue"><?php echo $total_listings; ?></div>
-          <div class="db-stat-label">Total Listing</div>
-        </div>
-        <div class="db-stat">
-          <div class="db-stat-value green"><?php echo $sold_count; ?></div>
-          <div class="db-stat-label">Akun Terjual</div>
-        </div>
-        <div class="db-stat">
-          <div class="db-stat-value orange"><?php echo $purchase_count; ?></div>
-          <div class="db-stat-label">Pembelian</div>
-        </div>
-      </div>
-
-      <!-- Recent listings -->
-      <div class="db-card">
-        <div class="db-card-header">
-          <span class="db-card-title">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            Listing Terbaru
-          </span>
-          <button class="db-nav-item" data-panel="transaksi" style="padding:6px 12px;font-size:12px;color:var(--blue);">Lihat Semua →</button>
-        </div>
-
-        <?php if (empty($listings)): ?>
-          <div class="db-empty">
-            <div class="db-empty-icon">📦</div>
-            <strong>Belum ada listing</strong>
-            <p>Kamu belum pernah menjual akun. Mulai sekarang!</p>
+    <!-- Tab Penjualan -->
+    <div class="db-tab-panel active" id="tab-penjualan">
+      <?php if (empty($sellOrders)): ?>
+        <div class="db-empty"><div class="db-empty-icon">💸</div><strong>Belum ada penjualan</strong><p>Listing yang dibeli pembeli muncul di sini.</p></div>
+      <?php else: ?>
+        <div class="db-item-list">
+          <?php foreach ($sellOrders as $ord):
+            $imgSrc = !empty($ord['image_url']) ? '../../'.htmlspecialchars($ord['image_url']) : null; ?>
+          <div class="db-item">
+            <?php if ($imgSrc): ?><img src="<?php echo $imgSrc; ?>" class="db-item-thumb" onerror="this.style.display='none'">
+            <?php else: ?><div class="db-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px">🎮</div><?php endif; ?>
+            <div class="db-item-info">
+              <div class="db-item-title"><?php echo htmlspecialchars($ord['title']); ?></div>
+              <div class="db-item-meta"><span><?php echo htmlspecialchars($ord['game_name']); ?></span><span>·</span><span>Pembeli: <?php echo htmlspecialchars($ord['buyer_name']); ?></span><span>·</span><span>#<?php echo $ord['order_id']; ?></span></div>
+            </div>
+            <span class="badge <?php echo statusBadge($ord['order_status']); ?>"><?php echo statusLabel($ord['order_status']); ?></span>
+            <div class="db-item-price"><?php echo formatRp($ord['total_price']); ?><small><?php echo timeAgo($ord['created_at']); ?></small></div>
           </div>
-        <?php else: ?>
-          <div class="db-item-list">
-            <?php foreach (array_slice($listings, 0, 3) as $item): ?>
-            <div class="db-item">
-              <img src="<?php echo htmlspecialchars($item['game_image']); ?>"
-                   alt="<?php echo htmlspecialchars($item['game_name']); ?>"
-                   class="db-item-thumb"
-                   onerror="this.src='<?php echo $base_url; ?>assets/img/placeholder.png'">
-              <div class="db-item-info">
-                <div class="db-item-title"><?php echo htmlspecialchars($item['title']); ?></div>
-                <div class="db-item-meta">
-                  <span><?php echo htmlspecialchars($item['game_name']); ?></span>
-                  <?php if ($item['rank']): ?>
-                    <span>· <?php echo htmlspecialchars($item['rank']); ?></span>
-                  <?php endif; ?>
-                  <?php if ($item['level']): ?>
-                    <span>· Lv <?php echo $item['level']; ?></span>
-                  <?php endif; ?>
-                </div>
-              </div>
-              <?php echo listing_badge($item['status']); ?>
-              <div class="db-item-price">
-                <?php echo rupiah((float)$item['price']); ?>
-                <small><?php echo date('d M Y', strtotime($item['created_at'])); ?></small>
-              </div>
-            </div>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
-      </div>
-
-    </section>
-    <!-- /OVERVIEW -->
-
-
-    <!-- ─────────────── PANEL: TRANSAKSI ─────────────── -->
-    <section id="panel-transaksi" class="db-panel">
-
-      <div class="db-card">
-        <div class="db-card-header">
-          <span class="db-card-title">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>
-            Transaksi Saya
-          </span>
-          <!-- Tombol tambah listing -->
-          <button class="btn btn-primary" id="btnAddListing" style="font-size:13px;padding:8px 16px;">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Jual Akun
-          </button>
+          <?php endforeach; ?>
         </div>
+      <?php endif; ?>
+    </div>
 
-        <!-- Tabs -->
-        <div class="db-tabs">
-          <button class="db-tab active" data-tab="penjualan">
-            Penjualan
-            <span style="background:var(--blue-lt);color:var(--blue);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;"><?php echo $total_listings; ?></span>
-          </button>
-          <button class="db-tab" data-tab="pembelian">
-            Pembelian
-            <span style="background:var(--bg3);color:var(--muted);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;"><?php echo $purchase_count; ?></span>
-          </button>
-        </div>
-
-        <!-- ── TAB: PENJUALAN ── -->
-        <div id="tab-penjualan" class="db-tab-panel active">
-          <?php if (empty($listings)): ?>
-            <div class="db-empty">
-              <div class="db-empty-icon">🎮</div>
-              <strong>Belum ada listing</strong>
-              <p>Klik tombol <strong>Jual Akun</strong> untuk mulai menjual akun game kamu.</p>
+    <!-- Tab Pembelian -->
+    <div class="db-tab-panel" id="tab-pembelian">
+      <?php if (empty($buyOrders)): ?>
+        <div class="db-empty"><div class="db-empty-icon">🛒</div><strong>Belum ada pembelian</strong><p>Akun game yang kamu beli muncul di sini.</p></div>
+      <?php else: ?>
+        <div class="db-item-list">
+          <?php foreach ($buyOrders as $ord):
+            $imgSrc   = !empty($ord['image_url']) ? '../../'.htmlspecialchars($ord['image_url']) : '';
+            $proofUrl = !empty($ord['payment_proof']) ? '../../'.htmlspecialchars($ord['payment_proof']) : '';
+            $statusLbl = statusLabel($ord['order_status']);
+            $paidAt    = !empty($ord['paid_at']) ? date('d M Y, H:i', strtotime($ord['paid_at'])) : '-';
+            $createdAt = date('d M Y, H:i', strtotime($ord['created_at'])); ?>
+          <div class="db-item">
+            <?php if ($imgSrc): ?><img src="<?php echo $imgSrc; ?>" class="db-item-thumb" onerror="this.style.display='none'">
+            <?php else: ?><div class="db-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px">🎮</div><?php endif; ?>
+            <div class="db-item-info">
+              <div class="db-item-title"><?php echo htmlspecialchars($ord['title']); ?></div>
+              <div class="db-item-meta"><span><?php echo htmlspecialchars($ord['game_name']); ?></span><span>·</span><span>Penjual: <?php echo htmlspecialchars($ord['seller_name']); ?></span></div>
             </div>
-          <?php else: ?>
-            <div class="db-item-list">
-              <?php foreach ($listings as $item): ?>
-              <div class="db-item">
-                <img src="<?php echo htmlspecialchars($item['game_image']); ?>"
-                     alt="<?php echo htmlspecialchars($item['game_name']); ?>"
-                     class="db-item-thumb"
-                     onerror="this.src=''">
-                <div class="db-item-info">
-                  <div class="db-item-title"><?php echo htmlspecialchars($item['title']); ?></div>
-                  <div class="db-item-meta">
-                    <span><?php echo htmlspecialchars($item['game_name']); ?></span>
-                    <?php if ($item['rank']): ?>
-                      <span>· <?php echo htmlspecialchars($item['rank']); ?></span>
-                    <?php endif; ?>
-                    <?php if ($item['level']): ?>
-                      <span>· Lv <?php echo $item['level']; ?></span>
-                    <?php endif; ?>
-                    <?php if ($item['account_login_type']): ?>
-                      <span>· <?php echo htmlspecialchars($item['account_login_type']); ?></span>
-                    <?php endif; ?>
-                    <span style="color:var(--muted);">· <?php echo date('d M Y', strtotime($item['created_at'])); ?></span>
-                  </div>
-                </div>
-                <?php echo listing_badge($item['status']); ?>
-                <div class="db-item-price">
-                  <?php echo rupiah((float)$item['price']); ?>
-                  <small>
-                    <?php if ($item['status'] === 'sold'): ?>
-                      Sudah terjual
-                    <?php else: ?>
-                      Aktif dijual
-                    <?php endif; ?>
-                  </small>
-                </div>
-                <?php if ($item['status'] === 'ready'): ?>
-                  <button class="btn-edit-listing"
-                    data-id="<?php echo (int)$item['listing_id']; ?>"
-                    data-game-id="<?php echo (int)$item['game_id']; ?>"
-                    data-title="<?php echo htmlspecialchars($item['title'] ?? '', ENT_QUOTES); ?>"
-                    data-price="<?php echo htmlspecialchars((string)$item['price'], ENT_QUOTES); ?>"
-                    data-rank="<?php echo htmlspecialchars($item['rank'] ?? '', ENT_QUOTES); ?>"
-                    data-level="<?php echo htmlspecialchars((string)($item['level'] ?? ''), ENT_QUOTES); ?>"
-                    data-server="<?php echo htmlspecialchars($item['server'] ?? '', ENT_QUOTES); ?>"
-                    data-login-type="<?php echo htmlspecialchars($item['account_login_type'] ?? '', ENT_QUOTES); ?>"
-                    data-account-id="<?php echo htmlspecialchars($item['id'] ?? '', ENT_QUOTES); ?>"
-                    data-description="<?php echo htmlspecialchars($item['description'] ?? '', ENT_QUOTES); ?>"
-                    data-image-url="<?php echo !empty($item['image_url']) ? htmlspecialchars($base_url . $item['image_url'], ENT_QUOTES) : ''; ?>"
-                    title="Edit listing"
-                    style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:var(--radius-sm);transition:color .15s;"
-                    onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='var(--muted)'">
-                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                  <button class="btn-delete-listing" data-id="<?php echo $item['listing_id']; ?>"
-                    title="Hapus listing"
-                    style="background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:var(--radius-sm);transition:color .15s;"
-                    onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='var(--muted)'">
-                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                  </button>
-                <?php endif; ?>
-              </div>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-        </div>
-        <!-- /PENJUALAN -->
-
-        <!-- ── TAB: PEMBELIAN ── -->
-        <div id="tab-pembelian" class="db-tab-panel">
-          <?php if (empty($purchases)): ?>
-            <div class="db-empty">
-              <div class="db-empty-icon">🛒</div>
-              <strong>Belum ada pembelian</strong>
-              <p>Kamu belum pernah membeli akun. Jelajahi <a href="<?php echo $base_url; ?>index.php" style="color:var(--blue);font-weight:600;">marketplace</a> sekarang.</p>
-            </div>
-          <?php else: ?>
-            <div class="db-item-list">
-              <?php foreach ($purchases as $p): ?>
-              <?php
-                $purchase_status = $p['payment_status'] ?: $p['order_status'];
-                $purchase_image = !empty($p['listing_image']) ? $base_url . $p['listing_image'] : $p['game_image'];
-                $proof_url = !empty($p['payment_proof']) ? $base_url . $p['payment_proof'] : '';
-              ?>
-              <div class="db-item">
-                <img src="<?php echo htmlspecialchars($purchase_image); ?>"
-                     alt="<?php echo htmlspecialchars($p['game_name']); ?>"
-                     class="db-item-thumb"
-                     onerror="this.src=''">
-                <div class="db-item-info">
-                  <div class="db-item-title"><?php echo htmlspecialchars($p['title']); ?></div>
-                  <div class="db-item-meta">
-                    <span><?php echo htmlspecialchars($p['game_name']); ?></span>
-                    <?php if ($p['rank']): ?><span>· <?php echo htmlspecialchars($p['rank']); ?></span><?php endif; ?>
-                    <?php if ($p['level']): ?><span>· Lv <?php echo $p['level']; ?></span><?php endif; ?>
-                    <?php if ($p['payment_method']): ?><span>· <?php echo htmlspecialchars($p['payment_method']); ?></span><?php endif; ?>
-                    <span>· <?php echo date('d M Y', strtotime($p['created_at'])); ?></span>
-                  </div>
-                </div>
-                <?php echo order_badge($purchase_status); ?>
-                <div class="db-item-price">
-                  <?php echo rupiah((float)$p['total_price']); ?>
-                  <small>
-                    <?php if ($p['paid_at']): ?>
-                      Dibayar <?php echo date('d M Y', strtotime($p['paid_at'])); ?>
-                    <?php else: ?>
-                      Belum dibayar
-                    <?php endif; ?>
-                  </small>
-                </div>
-                <button type="button"
-                        class="db-purchase-detail-btn"
-                        data-order-id="<?php echo (int)$p['order_id']; ?>"
-                        data-listing-id="<?php echo (int)$p['listing_id']; ?>"
-                        data-title="<?php echo htmlspecialchars($p['title'], ENT_QUOTES); ?>"
-                        data-game="<?php echo htmlspecialchars($p['game_name'], ENT_QUOTES); ?>"
-                        data-seller="<?php echo htmlspecialchars($p['seller_name'] ?? '-', ENT_QUOTES); ?>"
-                        data-total="<?php echo htmlspecialchars(rupiah((float)$p['total_price']), ENT_QUOTES); ?>"
-                        data-method="<?php echo htmlspecialchars($p['payment_method'] ?? '', ENT_QUOTES); ?>"
-                        data-status="<?php echo htmlspecialchars($purchase_status, ENT_QUOTES); ?>"
-                        data-status-label="<?php echo htmlspecialchars(order_status_label($purchase_status), ENT_QUOTES); ?>"
-                        data-created="<?php echo htmlspecialchars(date('d M Y, H:i', strtotime($p['created_at'])), ENT_QUOTES); ?>"
-                        data-paid="<?php echo htmlspecialchars(!empty($p['paid_at']) ? date('d M Y, H:i', strtotime($p['paid_at'])) : '-', ENT_QUOTES); ?>"
-                        data-image="<?php echo htmlspecialchars($purchase_image, ENT_QUOTES); ?>"
-                        data-proof-url="<?php echo htmlspecialchars($proof_url, ENT_QUOTES); ?>">
-                  Detail
-                </button>
-              </div>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-        </div>
-        <!-- /PEMBELIAN -->
-
-      </div>
-    </section>
-    <!-- /TRANSAKSI -->
-
-
-    <!-- ─────────────── PANEL: PROFIL ─────────────── -->
-    <section id="panel-profil" class="db-panel">
-
-      <div class="db-card">
-        <div class="db-card-header">
-          <span class="db-card-title">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Profil Saya
-          </span>
-          <button class="btn btn-outline" id="btnEditProfile" style="font-size:13px;padding:7px 14px;">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Edit Profil
-          </button>
-        </div>
-
-        <form id="profileForm"
-              action="<?php echo $base_url; ?>pages/users/update_profile.php"
-              method="POST">
-          <div class="db-form-grid">
-            <div class="db-form-group">
-              <label for="inp_username">Username</label>
-              <input type="text" id="inp_username" name="username"
-                     value="<?php echo htmlspecialchars($user['username']); ?>"
-                     readonly>
-            </div>
-            <div class="db-form-group">
-              <label for="inp_email">Email</label>
-              <input type="email" id="inp_email" name="email"
-                     value="<?php echo htmlspecialchars($user['email']); ?>"
-                     readonly>
-            </div>
-            <div class="db-form-group full">
-              <label for="inp_fullname">Nama Lengkap</label>
-              <input type="text" id="inp_fullname" name="full_name"
-                     value="<?php echo htmlspecialchars($user['full_name'] ?? ''); ?>"
-                     placeholder="Masukkan nama lengkap">
-            </div>
-            <div class="db-form-group">
-              <label for="inp_phone">Nomor Telepon</label>
-              <input type="tel" id="inp_phone" name="phone_number"
-                     value="<?php echo htmlspecialchars($user['phone_number'] ?? ''); ?>"
-                     placeholder="08xxxxxxxxxx">
-            </div>
-            <div class="db-form-group">
-              <label for="inp_role">Status</label>
-              <input type="text" id="inp_role"
-                     value="<?php echo ucfirst(htmlspecialchars($user['role'])); ?>"
-                     readonly>
-            </div>
-            <div class="db-form-group full">
-              <label for="inp_password">Password Baru <span style="color:var(--muted);font-weight:400;">(kosongkan jika tidak ingin mengubah)</span></label>
-              <input type="password" id="inp_password" name="password"
-                     placeholder="••••••••">
-            </div>
+            <span class="badge <?php echo statusBadge($ord['order_status']); ?>"><?php echo $statusLbl; ?></span>
+            <div class="db-item-price"><?php echo formatRp($ord['total_price']); ?><small><?php echo timeAgo($ord['created_at']); ?></small></div>
+            <button class="db-purchase-detail-btn"
+              data-order-id="<?php echo $ord['order_id']; ?>"
+              data-title="<?php echo htmlspecialchars($ord['title'],ENT_QUOTES); ?>"
+              data-game="<?php echo htmlspecialchars($ord['game_name'],ENT_QUOTES); ?>"
+              data-seller="<?php echo htmlspecialchars($ord['seller_name'],ENT_QUOTES); ?>"
+              data-status="<?php echo $ord['order_status']; ?>"
+              data-status-label="<?php echo $statusLbl; ?>"
+              data-method="<?php echo htmlspecialchars($ord['payment_method']??'-',ENT_QUOTES); ?>"
+              data-created="<?php echo $createdAt; ?>"
+              data-paid="<?php echo $paidAt; ?>"
+              data-total="<?php echo formatRp($ord['total_price']); ?>"
+              data-image="<?php echo $imgSrc; ?>"
+              data-proof-url="<?php echo $proofUrl; ?>">Detail</button>
           </div>
-
-          <div class="db-form-actions">
-            <button type="button" id="btnCancelEdit" class="btn btn-outline"
-                    style="display:none;font-size:13px;padding:8px 16px;">
-              Batal
-            </button>
-            <button type="submit" id="btnSaveProfile" class="btn btn-primary"
-                    style="display:none;font-size:13px;padding:8px 20px;">
-              Simpan Perubahan
-            </button>
-          </div>
-        </form>
-
-      </div>
-
-      <!-- Info akun -->
-      <div class="db-card">
-        <div class="db-card-header">
-          <span class="db-card-title">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Info Akun
-          </span>
+          <?php endforeach; ?>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:13px;color:var(--muted);">
-          <div>
-            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Status Akun</div>
-            <span class="badge <?php echo $user['status'] === 'active' ? 'badge-ready' : 'badge-cancelled'; ?>">
-              <?php echo ucfirst($user['status']); ?>
-            </span>
-          </div>
-          <div>
-            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Terdaftar</div>
-            <?php echo date('d M Y, H:i', strtotime($user['created_at'])); ?> WIB
-          </div>
-          <div>
-            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Total Listing</div>
-            <?php echo $total_listings; ?> akun
-          </div>
-          <div>
-            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Total Pembelian</div>
-            <?php echo $purchase_count; ?> transaksi
-          </div>
-        </div>
-      </div>
+      <?php endif; ?>
+    </div>
 
-    </section>
-    <!-- /PROFIL -->
+  </div>
+</div><!-- /panel-transaksi -->
 
-  </main>
-  <!-- /MAIN -->
 
-</div>
-<!-- /dashboard-wrapper -->
-
-<!--
-     MODAL: DETAIL PEMBELIAN
--->
-<div class="db-modal-backdrop" id="purchaseDetailModal" role="dialog" aria-modal="true" aria-labelledby="purchaseModalTitle">
-  <div class="db-modal db-modal--purchase">
-    <div class="db-modal-header">
-      <span class="db-modal-title" id="purchaseModalTitle">Detail Pembelian</span>
-      <button class="db-modal-close" id="btnClosePurchaseModal" aria-label="Tutup">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+<!-- ── PANEL: LISTING ────────────────────────────────────────────────────── -->
+<div class="db-panel" id="panel-listing">
+  <div class="db-card">
+    <div class="db-card-header">
+      <div class="db-card-title"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Listing Saya</div>
+      <button class="btn btn-primary" id="btnAddListing" style="font-size:13px;padding:8px 16px">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Jual Akun
       </button>
     </div>
-    <div class="db-modal-body">
-      <div class="db-purchase-hero">
-        <img id="purchaseModalImage" src="" alt="" class="db-purchase-hero-img">
-        <div class="db-purchase-hero-copy">
-          <div id="purchaseModalGame" class="db-purchase-game"></div>
-          <div id="purchaseModalItem" class="db-purchase-title"></div>
+    <?php if (empty($myListings)): ?>
+      <div class="db-empty"><div class="db-empty-icon">📦</div><strong>Belum ada listing</strong><p>Klik "Jual Akun" untuk mulai menjual.</p></div>
+    <?php else: ?>
+      <div class="db-item-list">
+        <?php foreach ($myListings as $lst):
+          $imgSrc = !empty($lst['image_url']) ? '../../'.htmlspecialchars($lst['image_url']) : ''; ?>
+        <div class="db-item">
+          <?php if ($imgSrc): ?><img src="<?php echo $imgSrc; ?>" class="db-item-thumb" onerror="this.style.display='none'">
+          <?php else: ?><div class="db-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px">🎮</div><?php endif; ?>
+          <div class="db-item-info">
+            <div class="db-item-title"><?php echo htmlspecialchars($lst['title']); ?></div>
+            <div class="db-item-meta">
+              <span><?php echo htmlspecialchars($lst['game_name']); ?></span>
+              <?php if (!empty($lst['rank'])): ?><span>·</span><span><?php echo htmlspecialchars($lst['rank']); ?></span><?php endif; ?>
+              <?php if (!empty($lst['level'])): ?><span>·</span><span>Lv.<?php echo $lst['level']; ?></span><?php endif; ?>
+              <span>·</span><span><?php echo timeAgo($lst['created_at']); ?></span>
+            </div>
+          </div>
+          <span class="badge badge-<?php echo $lst['status']; ?>"><?php echo $lst['status']==='ready'?'Tersedia':'Terjual'; ?></span>
+          <div class="db-item-price"><?php echo formatRp($lst['price']); ?></div>
+          <?php if ($lst['status']==='ready'): ?>
+          <button class="btn-edit-listing" title="Edit"
+            style="border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);padding:7px 10px;cursor:pointer;color:var(--muted);transition:all .15s"
+            data-id="<?php echo $lst['listing_id']; ?>"
+            data-title="<?php echo htmlspecialchars($lst['title'],ENT_QUOTES); ?>"
+            data-game-id="<?php echo $lst['game_id']; ?>"
+            data-price="<?php echo $lst['price']; ?>"
+            data-rank="<?php echo htmlspecialchars($lst['rank']??'',ENT_QUOTES); ?>"
+            data-level="<?php echo $lst['level']; ?>"
+            data-server="<?php echo htmlspecialchars($lst['server']??'',ENT_QUOTES); ?>"
+            data-login-type="<?php echo htmlspecialchars($lst['account_login_type']??'',ENT_QUOTES); ?>"
+            data-account-id="<?php echo htmlspecialchars($lst['id']??'',ENT_QUOTES); ?>"
+            data-description="<?php echo htmlspecialchars($lst['description']??'',ENT_QUOTES); ?>"
+            data-image-url="<?php echo $imgSrc; ?>">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <button class="btn-delete-listing" title="Hapus"
+            style="border:1px solid #fee2e2;border-radius:var(--radius-sm);background:#fef2f2;padding:7px 10px;cursor:pointer;color:#dc2626;transition:all .15s"
+            data-id="<?php echo $lst['listing_id']; ?>">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+          </button>
+          <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+</div><!-- /panel-listing -->
+
+
+<!-- ── PANEL: PROFIL ────────────────────────────────────────────────────── -->
+<div class="db-panel" id="panel-profil">
+  <div class="db-card">
+    <div class="db-card-header">
+      <div class="db-card-title"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil Saya</div>
+      <button class="btn" id="btnEditProfile" style="font-size:13px;padding:8px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;font-family:Outfit,sans-serif">Edit Profil</button>
+      <button class="btn" id="btnCancelEdit" style="font-size:13px;padding:8px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;display:none;font-family:Outfit,sans-serif">Batal</button>
+    </div>
+    <form id="profileForm" action="update_profile.php" method="POST" autocomplete="off">
+      <div class="db-form-grid">
+        <div class="db-form-group">
+          <label>Username</label>
+          <input type="text" value="<?php echo htmlspecialchars($user['username']); ?>" readonly>
+        </div>
+        <div class="db-form-group">
+          <label>Email</label>
+          <input type="email" value="<?php echo htmlspecialchars($user['email']); ?>" readonly>
+        </div>
+        <div class="db-form-group">
+          <label for="full_name">Nama Lengkap</label>
+          <input type="text" id="full_name" name="full_name" value="<?php echo htmlspecialchars($user['full_name']??''); ?>" placeholder="Nama lengkap kamu">
+        </div>
+        <div class="db-form-group">
+          <label for="phone_number">Nomor HP</label>
+          <input type="tel" id="phone_number" name="phone_number" value="<?php echo htmlspecialchars($user['phone_number']??''); ?>" placeholder="08xxxxxxxx">
+        </div>
+        <div class="db-form-group full">
+          <label for="new_password">Password Baru <span style="color:var(--muted);font-weight:400">(kosongkan jika tidak ingin ganti)</span></label>
+          <input type="password" id="new_password" name="new_password" placeholder="Password baru (min. 6 karakter)">
         </div>
       </div>
-
-      <div class="db-detail-grid">
-        <div class="db-detail-row">
-          <span>Order ID</span>
-          <strong id="purchaseModalOrderId"></strong>
-        </div>
-        <div class="db-detail-row">
-          <span>Penjual</span>
-          <strong id="purchaseModalSeller"></strong>
-        </div>
-        <div class="db-detail-row">
-          <span>Status</span>
-          <strong id="purchaseModalStatus"></strong>
-        </div>
-        <div class="db-detail-row">
-          <span>Metode</span>
-          <strong id="purchaseModalMethod"></strong>
-        </div>
-        <div class="db-detail-row">
-          <span>Tanggal Order</span>
-          <strong id="purchaseModalCreated"></strong>
-        </div>
-        <div class="db-detail-row">
-          <span>Tanggal Bayar</span>
-          <strong id="purchaseModalPaid"></strong>
-        </div>
-        <div class="db-detail-row db-detail-row--total">
-          <span>Total</span>
-          <strong id="purchaseModalTotal"></strong>
-        </div>
+      <div class="db-form-actions">
+        <button type="submit" id="btnSaveProfile" class="btn btn-primary" style="font-size:13px;display:none">Simpan Perubahan</button>
       </div>
-
-      <div class="db-status-note" id="purchaseModalNote"></div>
-
-      <a href="#" target="_blank" class="db-proof-link" id="purchaseModalProofLink">
-        Lihat bukti pembayaran
-      </a>
-
-      <form id="paymentProofForm"
-            action="<?php echo $base_url; ?>pages/users/update_payment.php"
-            method="POST"
-            enctype="multipart/form-data"
-            class="db-payment-form">
-        <input type="hidden" name="order_id" id="pay_order_id">
-
-        <div class="db-form-grid">
-          <div class="db-form-group full">
-            <label for="pay_method">Metode Pembayaran</label>
-            <select name="payment_method" id="pay_method" required>
-              <option value="Transfer Bank">Transfer Bank</option>
-              <option value="E-Wallet">E-Wallet</option>
-              <option value="QRIS">QRIS</option>
-            </select>
-          </div>
-          <div class="db-form-group full">
-            <label for="payment_proof">Bukti Pembayaran</label>
-            <input type="file"
-                   name="payment_proof"
-                   id="payment_proof"
-                   accept="image/jpeg,image/png,image/webp,application/pdf"
-                   required>
-            <small class="db-form-help">Upload JPG, PNG, WEBP, atau PDF. Maksimal 2MB.</small>
-          </div>
-        </div>
-
-        <div class="db-form-actions">
-          <button type="button" class="btn btn-outline" id="btnCancelPurchaseModal" style="font-size:13px;padding:8px 16px;">
-            Tutup
-          </button>
-          <button type="submit" class="btn btn-primary" id="btnSubmitPayment" style="font-size:13px;padding:8px 20px;">
-            Kirim Bukti Pembayaran
-          </button>
-        </div>
-      </form>
+    </form>
+  </div>
+  <div class="db-card">
+    <div class="db-card-header"><div class="db-card-title">Informasi Akun</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding-top:4px">
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Bergabung Sejak</div><div style="font-weight:600"><?php echo date('d M Y', strtotime($user['created_at'])); ?></div></div>
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Status Akun</div><span class="badge badge-ready">Aktif</span></div>
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Total Listing</div><div style="font-weight:600"><?php echo $stats['total_listing']; ?></div></div>
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Akun Terjual</div><div style="font-weight:600"><?php echo $stats['listing_sold']; ?></div></div>
     </div>
   </div>
+</div><!-- /panel-profil -->
+
+</main>
 </div>
 
 
-<!-- ══════════════════════════════════════════════
-     MODAL: TAMBAH LISTING
-══════════════════════════════════════════════ -->
-<div class="db-modal-backdrop" id="addListingModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+<!-- ══ MODAL: TAMBAH / EDIT LISTING ════════════════════════════════════════ -->
+<div class="db-modal-backdrop" id="addListingModal">
   <div class="db-modal">
     <div class="db-modal-header">
-      <span class="db-modal-title" id="modalTitle">Jual Akun Game</span>
-      <button class="db-modal-close" id="btnCloseModal" aria-label="Tutup">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <div class="db-modal-title" id="modalTitle">Jual Akun Game</div>
+      <button class="db-modal-close" id="btnCloseModal">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <div class="db-modal-body">
-      <form id="formAddListing"
-            action="<?php echo $base_url; ?>pages/users/add_listing.php"
-            method="POST"
-            enctype="multipart/form-data">
-        <input type="hidden" id="lst_listing_id" name="listing_id" value="">
- 
+      <form id="formAddListing" action="add_listing.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" id="lst_listing_id" name="listing_id">
         <div class="db-form-grid">
- 
           <div class="db-form-group full">
-            <label for="lst_title">Judul Listing <span style="color:#dc2626;">*</span></label>
-            <input type="text" id="lst_title" name="title" required
-                   placeholder="cth: Valorant Immortal 3 – All Agents Unlocked">
+            <label for="lst_title">Judul Listing <span style="color:#dc2626">*</span></label>
+            <input type="text" id="lst_title" name="title" placeholder="Contoh: Akun Valorant Immortal 3" maxlength="150" required>
           </div>
- 
           <div class="db-form-group">
-            <label for="lst_game">Game <span style="color:#dc2626;">*</span></label>
+            <label for="lst_game">Game <span style="color:#dc2626">*</span></label>
             <select id="lst_game" name="game_id" required>
               <option value="">-- Pilih Game --</option>
-              <?php foreach ($games_list as $g): ?>
+              <?php foreach ($games as $g): ?>
                 <option value="<?php echo $g['id']; ?>"><?php echo htmlspecialchars($g['name']); ?></option>
               <?php endforeach; ?>
             </select>
           </div>
- 
           <div class="db-form-group">
-            <label for="lst_price">Harga (Rp) <span style="color:#dc2626;">*</span></label>
-            <input type="number" id="lst_price" name="price" required
-                   min="1000" step="1000" placeholder="350000">
+            <label for="lst_price">Harga (Rp) <span style="color:#dc2626">*</span></label>
+            <input type="number" id="lst_price" name="price" placeholder="50000" min="1000" required>
           </div>
- 
           <div class="db-form-group">
             <label for="lst_rank">Rank</label>
-            <input type="text" id="lst_rank" name="rank" placeholder="cth: Immortal 3">
+            <input type="text" id="lst_rank" name="rank" placeholder="Contoh: Immortal, Diamond">
           </div>
- 
           <div class="db-form-group">
             <label for="lst_level">Level</label>
-            <input type="number" id="lst_level" name="level" min="1" placeholder="150">
+            <input type="number" id="lst_level" name="level" placeholder="Contoh: 60" min="1">
           </div>
-
-          <div class="db-form-group full">
+          <div class="db-form-group">
             <label for="lst_server">Server</label>
-            <select id="lst_server" name="server">
-              <option value="">-- Pilih Server --</option>
-              <option value="Asia">Asia</option>
-              <option value="North America">North America</option>
-              <option value="Europe">Europe</option>
-              <option value="Global">Global</option>
-            </select>
+            <input type="text" id="lst_server" name="server" placeholder="Contoh: Asia, NA">
           </div>
- 
-          <div class="db-form-group full">
-            <label for="lst_login_type">Tipe Login Akun</label>
+          <div class="db-form-group">
+            <label for="lst_login_type">Login Via</label>
             <select id="lst_login_type" name="account_login_type">
-              <option value="">-- Pilih Tipe --</option>
+              <option value="">-- Pilih --</option>
               <option value="Email">Email</option>
               <option value="Google">Google</option>
               <option value="Facebook">Facebook</option>
-              <option value="VNG">VNG</option>
-              <option value="Moonton">Moonton</option>
-              <option value="Lainnya">Lainnya</option>
+              <option value="Apple ID">Apple ID</option>
+              <option value="Phone">Phone</option>
             </select>
           </div>
- 
-          <div class="db-form-group full">
-            <label for="lst_id">ID Akun (opsional)</label>
-            <input type="text" id="lst_id" name="id" placeholder="ID dalam game">
+          <div class="db-form-group">
+            <label for="lst_id">ID Akun</label>
+            <input type="text" id="lst_id" name="id" placeholder="ID in-game kamu">
           </div>
- 
-          <div class="db-form-group full">
-            <label for="lst_image">Foto Screenshot Akun <span id="lstImageRequired" style="color:#dc2626;">*</span></label>
-            <!-- Drop zone -->
-            <div id="lstImageDropzone" style="
-                border: 2px dashed var(--border);
-                border-radius: var(--radius-md);
-                padding: 24px 16px;
-                text-align: center;
-                cursor: pointer;
-                transition: border-color .2s, background .2s;
-                background: var(--bg);"
-              onclick="document.getElementById('lst_image').click()"
-              ondragover="event.preventDefault();this.style.borderColor='var(--blue)';this.style.background='var(--blue-lt)'"
-              ondragleave="this.style.borderColor='';this.style.background='var(--bg)'"
-              ondrop="handleImageDrop(event)">
-              <div id="lstDropIcon" style="font-size:32px;margin-bottom:8px;">🖼️</div>
-              <div id="lstDropText" style="font-size:13px;color:var(--muted);">
-                Klik atau <strong>drag &amp; drop</strong> gambar di sini<br>
-                <span style="font-size:11px;">JPG, PNG, WEBP · Maks. 2MB</span>
-              </div>
-              <!-- Preview -->
-              <img id="lstImagePreview" src="" alt="Preview"
-                   style="display:none;max-height:180px;border-radius:var(--radius);margin-top:12px;object-fit:contain;">
-            </div>
-            <input type="file" id="lst_image" name="image"
-                   accept="image/jpeg,image/png,image/webp"
-                   style="display:none;" required>
-            <div id="lstImageError" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></div>
-          </div>
- 
           <div class="db-form-group full">
             <label for="lst_desc">Deskripsi</label>
-            <textarea id="lst_desc" name="description" rows="4"
-                      style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:14px;color:var(--text);resize:vertical;outline:none;width:100%;transition:border-color .2s,box-shadow .2s;"
-                      placeholder="Ceritakan keunggulan akun ini: hero/karakter yang dimiliki, skins, prestasi, dsb."
-                      onfocus="this.style.borderColor='var(--blue)';this.style.boxShadow='0 0 0 3px rgba(26,86,255,.1)'"
-                      onblur="this.style.borderColor='';this.style.boxShadow=''"></textarea>
+            <textarea id="lst_desc" name="description" rows="3" placeholder="Ceritakan detail akun: skin, hero, item, dll." style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-family:Outfit,sans-serif;font-size:14px;resize:vertical;outline:none;width:100%;box-sizing:border-box;transition:border-color .2s"></textarea>
           </div>
- 
+          <div class="db-form-group full">
+            <label id="lstImageRequired">Foto Akun <span style="color:#dc2626">*</span></label>
+            <div class="lst-image-dropzone" id="lstImageDropzone"
+                 onclick="document.getElementById('lst_image').click()"
+                 ondragover="event.preventDefault();this.style.borderColor='var(--blue)'"
+                 ondragleave="this.style.borderColor=''"
+                 ondrop="window.handleImageDrop(event)">
+              <img id="lstImagePreview" alt="Preview">
+              <div id="lstDropIcon" class="lst-drop-icon">🖼️</div>
+              <div id="lstDropText" class="lst-drop-text"><strong>Klik atau drag foto akun</strong><br>JPG, PNG, WEBP · Maks. 2MB</div>
+            </div>
+            <input type="file" id="lst_image" name="image" accept="image/jpeg,image/png,image/webp" style="display:none">
+            <div id="lstImageError"></div>
+          </div>
         </div>
- 
-        <div class="db-form-actions" style="margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border);">
-          <button type="button" id="btnCloseModal2"
-                  class="btn btn-outline" style="font-size:13px;padding:8px 16px;"
-                  onclick="document.getElementById('addListingModal').classList.remove('open');document.body.style.overflow=''">
-            Batal
-          </button>
-          <button type="submit" class="btn btn-primary" style="font-size:13px;padding:8px 20px;">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span id="listingSubmitText">Tambah Listing</span>
-          </button>
+        <div class="db-form-actions">
+          <button type="button" id="btnCloseModal2" class="btn" style="padding:9px 18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;font-family:Outfit,sans-serif;font-size:14px">Batal</button>
+          <button type="submit" class="btn btn-primary" style="font-size:14px;padding:9px 20px"><span id="listingSubmitText">Tambah Listing</span></button>
         </div>
- 
       </form>
     </div>
   </div>
 </div>
-<!-- /MODAL -->
 
 
-<!-- ── Dashboard JS ──────────────────────────────────────────────────────── -->
-<script src="<?php echo $base_url; ?>assets/page/js/userdashboard.js"></script>
+<!-- ══ MODAL: DETAIL PEMBELIAN ══════════════════════════════════════════════ -->
+<div class="db-modal-backdrop" id="purchaseDetailModal">
+  <div class="db-modal db-modal--purchase">
+    <div class="db-modal-header">
+      <div class="db-modal-title">Detail Pembelian</div>
+      <button class="db-modal-close" id="btnClosePurchaseModal">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="db-modal-body">
+      <div class="db-purchase-hero">
+        <img id="purchaseModalImage" src="" alt="" class="db-purchase-hero-img" onerror="this.style.display='none'">
+        <div class="db-purchase-hero-copy">
+          <div class="db-purchase-game" id="purchaseModalGame"></div>
+          <div class="db-purchase-title" id="purchaseModalItem"></div>
+        </div>
+      </div>
+      <div class="db-detail-grid">
+        <div class="db-detail-row"><span>Order ID</span><strong id="purchaseModalOrderId"></strong></div>
+        <div class="db-detail-row"><span>Penjual</span><strong id="purchaseModalSeller"></strong></div>
+        <div class="db-detail-row"><span>Status</span><strong id="purchaseModalStatus"></strong></div>
+        <div class="db-detail-row"><span>Metode</span><strong id="purchaseModalMethod"></strong></div>
+        <div class="db-detail-row"><span>Tanggal Order</span><strong id="purchaseModalCreated"></strong></div>
+        <div class="db-detail-row"><span>Tanggal Bayar</span><strong id="purchaseModalPaid"></strong></div>
+        <div class="db-detail-row db-detail-row--total"><span>Total Pembayaran</span><strong id="purchaseModalTotal"></strong></div>
+      </div>
+      <div class="db-status-note" id="purchaseModalNote"></div>
+      <a id="purchaseModalProofLink" href="#" target="_blank" class="db-proof-link" style="display:none">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:5px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        Lihat Bukti Pembayaran
+      </a>
+      <!-- Upload bukti wrapper (JS mengatur display) -->
+      <div id="paymentProofForm" style="display:none" class="db-payment-form">
+        <form id="paymentProofFormEl" action="upload_proof.php" method="POST" enctype="multipart/form-data">
+          <input type="hidden" id="pay_order_id" name="order_id">
+          <input type="hidden" id="pay_method" name="payment_method">
+          <div class="db-form-group" style="margin-bottom:12px">
+            <label for="payment_proof" style="font-size:13px;font-weight:600;margin-bottom:6px;display:block">Upload Bukti Pembayaran</label>
+            <input type="file" id="payment_proof" name="payment_proof" accept="image/jpeg,image/png,image/webp"
+                   style="padding:8px;border:1px solid var(--border);border-radius:var(--radius);width:100%;box-sizing:border-box;font-family:Outfit,sans-serif;font-size:13px">
+            <div class="db-form-help" style="margin-top:4px">Format JPG, PNG, atau WEBP. Maks. 2MB.</div>
+          </div>
+          <div class="db-form-actions" style="padding-top:0;border:none">
+            <button type="submit" id="btnSubmitPayment" class="btn btn-primary" style="font-size:13px;padding:9px 20px">Kirim Bukti Pembayaran</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="db-modal-footer">
+      <button id="btnCancelPurchaseModal" class="btn" style="padding:8px 18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;font-family:Outfit,sans-serif;font-size:13px">Tutup</button>
+    </div>
+  </div>
+</div>
 
-<?php include '../../includes/footer.php'; ?>
+
+<?php mysqli_close($conn); include '../../includes/footer.php'; ?>
+<script>
+// Handle upload bukti: inner form
+document.addEventListener('DOMContentLoaded', () => {
+  const formEl        = document.getElementById('paymentProofFormEl');
+  const proofContainer = document.getElementById('paymentProofForm');
+  if (formEl) {
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitPayment');
+      const orig = btn ? btn.textContent : '';
+      if (btn) { btn.textContent = 'Mengirim...'; btn.disabled = true; }
+      try {
+        const res  = await fetch(formEl.action, { method: 'POST', body: new FormData(formEl) });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('purchaseDetailModal').classList.remove('open');
+          document.body.style.overflow = '';
+          window.showToast(data.message || 'Bukti berhasil dikirim.', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else { window.showToast(data.message || 'Gagal mengirim bukti.', 'error'); }
+      } catch { window.showToast('Gagal terhubung ke server.', 'error'); }
+      finally { if (btn) { btn.textContent = orig; btn.disabled = false; } }
+    });
+  }
+});
+</script>
+<script src="../../assets/page/js/userdashboard.js"></script>
+</body></html>
