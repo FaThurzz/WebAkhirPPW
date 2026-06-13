@@ -237,9 +237,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const purchaseModal = document.getElementById('purchaseDetailModal');
   const btnClosePurchaseModal = document.getElementById('btnClosePurchaseModal');
   const btnCancelPurchaseModal = document.getElementById('btnCancelPurchaseModal');
+  const btnCancelOrder = document.getElementById('btnCancelOrder');
   const paymentProofForm = document.getElementById('paymentProofForm');
   const paymentProofInput = document.getElementById('payment_proof');
   const purchaseProofLink = document.getElementById('purchaseModalProofLink');
+  let currentOrderId = null;
 
   const purchaseFields = {
     image: document.getElementById('purchaseModalImage'),
@@ -266,6 +268,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openPurchaseModal(data) {
     if (!purchaseModal) return;
+
+    currentOrderId = data.orderId || null;
+
+    // Tampilkan tombol batalkan hanya untuk order pending
+    if (btnCancelOrder) {
+      btnCancelOrder.style.display = data.status === 'pending' ? '' : 'none';
+    }
 
     if (purchaseFields.image) {
       purchaseFields.image.src = data.image || '';
@@ -339,6 +348,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnClosePurchaseModal) btnClosePurchaseModal.addEventListener('click', closePurchaseModal);
   if (btnCancelPurchaseModal) btnCancelPurchaseModal.addEventListener('click', closePurchaseModal);
+
+  // ── Batalkan order (hanya untuk status pending) ──────────────────────────
+  if (btnCancelOrder) {
+    btnCancelOrder.addEventListener('click', async () => {
+      if (!currentOrderId) return;
+      if (!confirm('Yakin ingin membatalkan order ini? Tindakan ini tidak dapat dibatalkan.')) return;
+
+      btnCancelOrder.textContent = 'Membatalkan...';
+      btnCancelOrder.disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('order_id', currentOrderId);
+
+        const res  = await fetch('cancel_order.php', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+          closePurchaseModal();
+          showToast(data.message || 'Order berhasil dibatalkan.', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast(data.message || 'Gagal membatalkan order.', 'error');
+        }
+      } catch {
+        showToast('Gagal terhubung ke server.', 'error');
+      } finally {
+        btnCancelOrder.textContent = '✕ Batalkan Order';
+        btnCancelOrder.disabled = false;
+      }
+    });
+  }
 
   if (purchaseModal) {
     purchaseModal.addEventListener('click', (e) => {

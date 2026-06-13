@@ -34,7 +34,7 @@ $stmt = mysqli_prepare($conn,
      FROM account_listing al
      JOIN games  g ON al.game_id  = g.id
      JOIN users  u ON al.user_id  = u.ID_User
-     WHERE al.listing_id = ? AND al.status = 'ready'");
+     WHERE al.listing_id = ? AND al.status IN ('ready', 'sold')");
 
 if (!$stmt) {
     header('Location: marketplace.php');
@@ -91,7 +91,8 @@ function timeAgo($datetime) {
     return date('d M Y', strtotime($datetime));
 }
 
-$badge      = getBadge($listing);
+$isSold     = ($listing['listing_status'] === 'sold');
+$badge      = $isSold ? ['class' => 'badge-sold', 'label' => 'Terjual'] : getBadge($listing);
 $imgSrc     = !empty($listing['image']) ? '../' . htmlspecialchars($listing['image']) : null;
 $gameImg    = !empty($listing['game_image']) ? '../' . htmlspecialchars($listing['game_image']) : null;
 $heroImg    = $imgSrc ?? $gameImg;
@@ -126,7 +127,7 @@ include '../includes/header.php';
   <div class="ld-left">
 
     <!-- Hero image -->
-    <div class="ld-gallery">
+    <div class="ld-gallery<?php echo $isSold ? ' ld-gallery--sold' : ''; ?>">
       <?php if ($heroImg): ?>
         <img src="<?php echo $heroImg; ?>"
              alt="<?php echo htmlspecialchars($listing['title']); ?>"
@@ -138,6 +139,11 @@ include '../includes/header.php';
       </div>
       <!-- Badge overlay -->
       <span class="ld-gallery-badge badge <?php echo $badge['class']; ?>"><?php echo $badge['label']; ?></span>
+      <?php if ($isSold): ?>
+        <div class="ld-sold-overlay">
+          <div class="ld-sold-stamp">TERJUAL</div>
+        </div>
+      <?php endif; ?>
     </div>
 
     <!-- Description card -->
@@ -224,10 +230,17 @@ include '../includes/header.php';
         <?php endif; ?>
         <div class="ld-spec-item">
           <div class="ld-spec-label">Status</div>
+          <?php if ($isSold): ?>
+          <div class="ld-spec-value ld-spec-status ld-spec-status--sold">
+            <span class="ld-status-dot ld-status-dot--sold"></span>
+            Sudah Terjual
+          </div>
+          <?php else: ?>
           <div class="ld-spec-value ld-spec-status">
             <span class="ld-status-dot"></span>
             Tersedia
           </div>
+          <?php endif; ?>
         </div>
         <div class="ld-spec-item">
           <div class="ld-spec-label">Diposting</div>
@@ -289,7 +302,14 @@ include '../includes/header.php';
       <div class="ld-price"><?php echo formatRp($listing['price']); ?></div>
 
       <!-- CTA buttons -->
-      <?php if (isset($_SESSION['user']) && !$isOwnListing): ?>
+      <?php if ($isSold): ?>
+        <button class="ld-btn-buy ld-btn-buy--sold" type="button" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          Akun Sudah Terjual
+        </button>
+      <?php elseif (isset($_SESSION['user']) && !$isOwnListing): ?>
         <button class="ld-btn-buy" id="btnBeli">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -537,7 +557,7 @@ include '../includes/header.php';
       <div id="payInfoQris" class="ld-pay-info-box" style="display:none">
         <div class="ld-pay-info-title">🔳 Scan QRIS</div>
         <div style="text-align:center;margin-top:10px">
-          <img src="../../assets/uploads/qris_admin.png"
+          <img src="../assets/uploads/qris_admin.png"
                onerror="this.onerror=null;this.src='';this.parentElement.innerHTML='<div style=\'padding:30px 20px;background:var(--bg);border:2px dashed var(--border);border-radius:var(--radius);color:var(--muted);font-size:13px\'>📷 Foto QRIS belum diupload admin<br><small>Upload ke: assets/uploads/qris_admin.png</small></div>'"
                alt="QRIS Admin" style="max-width:200px;width:100%;border-radius:var(--radius);border:1px solid var(--border)">
           <div style="font-size:12px;color:var(--muted);margin-top:8px">Scan dengan aplikasi pembayaran apapun</div>

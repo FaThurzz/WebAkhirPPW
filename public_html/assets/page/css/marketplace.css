@@ -245,6 +245,62 @@
   transition: background .2s;
 }
 .listing-buy-btn:hover { background: var(--blue-dk); }
+.listing-buy-btn--sold {
+  background: var(--muted) !important;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: .75;
+}
+.listing-buy-btn--sold:hover { background: var(--muted) !important; }
+
+/* ── Card sold state ── */
+.listing-card--sold {
+  border-color: var(--border);
+  opacity: .85;
+}
+.listing-card--sold:hover {
+  border-color: #aaa;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Wrapper gambar agar overlay bisa diposisikan */
+.listing-card-img-wrap {
+  position: relative;
+  width: 100%;
+}
+.listing-card-img-wrap .listing-card-img,
+.listing-card-img-wrap .listing-card-img-placeholder {
+  display: block;
+  width: 100%;
+}
+
+/* Grayscale pada gambar listing sold */
+.listing-card--sold .listing-card-img-wrap .listing-card-img {
+  filter: grayscale(85%) brightness(.9);
+  transition: filter .2s;
+}
+
+/* Overlay "TERJUAL" */
+.listing-sold-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.listing-sold-label {
+  background: rgba(0,0,0,.72);
+  color: #fff;
+  font-size: 13px; font-weight: 800;
+  letter-spacing: .14em;
+  padding: 6px 18px;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,.35);
+  text-transform: uppercase;
+}
+
+/* Badge sold */
+.badge-sold { background: rgba(100,100,100,.12); color: var(--muted); }
 
 /* Empty state */
 .empty-state {

@@ -31,7 +31,7 @@ if ($hour >= 5 && $hour < 12) {
       </div>
 
       <h1>Safe &amp; Secure Gaming<br/>Asset Marketplace</h1>
-      <p>Buy and sell verified game accounts, items, and services with absolute confidence. Our escrow system ensures total transaction security.</p>
+      <p>Selamat datang di website jual beli game ThurzShop. Disini kamu bisa menjual smua akun game dan membeli semua akun game yang ada di website.</p>
       <div class="hero-btns">
         <a href="#hot-deals" class="btn-ghost-lg">View Hot Deals</a>
       </div>
@@ -96,7 +96,7 @@ if ($hour >= 5 && $hour < 12) {
     <div class="section-header">
       <div>
         <div class="section-title">Browse by Game</div>
-        <div class="section-sub">Find premium accounts for your favorite titles</div>
+        <div class="section-sub">Temukan akun favoritmu</div>
         <div class="category-count">Total game tersedia: <?php echo mysqli_num_rows($games); ?> kategori</div>
       </div>
     </div>
@@ -128,7 +128,7 @@ if ($hour >= 5 && $hour < 12) {
     <div class="section-header">
       <div>
         <div class="section-title">🔥 Hot Deals</div>
-        <div class="section-sub">Limited-time offers — grab them before they're gone</div>
+        <div class="section-sub">Akun yang sedang panas, Ramai peminat</div>
       </div>
     </div>
     <?php if (empty($hotDeals)): ?>
@@ -266,7 +266,7 @@ $trusts = [
       <h2>Turn your gaming hours<br/>into real value.</h2>
       <p>Join thousands of sellers who earn daily by trading their high-value gaming assets securely.</p>
     </div>
-    <a href="pages/register.php" class="btn-white">Start Selling Today</a>
+    <a href="pages/users/dashboard.php" class="btn-white">Start Selling Today</a>
   </div>
 </div>
 

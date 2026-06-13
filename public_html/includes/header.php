@@ -229,8 +229,6 @@ $profile_url = $is_logged_in
              class="<?php echo (isset($active_page) && $active_page == 'home') ? 'active' : ''; ?>">Home</a></li>
       <li><a href="<?php echo $profile_url; ?>"
              class="<?php echo (isset($active_page) && $active_page == 'profile') ? 'active' : ''; ?>">Profile</a></li>
-      <li><a href="#"
-             class="<?php echo (isset($active_page) && $active_page == 'review') ? 'active' : ''; ?>">Reviews</a></li>
     </ul>
     <div class="nav-right">
       <form class="search-box" method="GET" action="<?php echo $base_url; ?>pages/marketplace.php">

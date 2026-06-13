@@ -618,6 +618,9 @@ include '../../includes/header.php';
     </div>
     <div class="db-modal-footer">
       <button id="btnCancelPurchaseModal" class="btn" style="padding:8px 18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;font-family:Outfit,sans-serif;font-size:13px">Tutup</button>
+      <button id="btnCancelOrder" style="display:none;padding:8px 18px;border:1px solid #dc2626;border-radius:var(--radius);background:#fef2f2;color:#dc2626;cursor:pointer;font-family:Outfit,sans-serif;font-size:13px;font-weight:600">
+        ✕ Batalkan Order
+      </button>
     </div>
   </div>
 </div>

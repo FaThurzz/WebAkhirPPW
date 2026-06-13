@@ -22,7 +22,7 @@ if ($gamesResult) {
 }
 
 // ── Build WHERE dan ORDER BY ────────────────────────────────────────────
-$whereParts = array("al.status = 'ready'");
+$whereParts = array("al.status IN ('ready', 'sold')");
 $params     = array();
 $types      = '';
 
@@ -104,7 +104,7 @@ $sql = "SELECT
         FROM account_listing al
         JOIN games g ON al.game_id = g.id
         WHERE $whereClause
-        ORDER BY $orderBy
+        ORDER BY FIELD(al.status,'ready','sold'), $orderBy
         LIMIT ? OFFSET ?";
 
 $filtered = array();
@@ -329,17 +329,25 @@ include '../includes/header.php';
         // Gambar: pakai image listing jika ada, fallback ke image game
         $imgSrc = (!empty($item['image'])) ? htmlspecialchars($item['image']) : htmlspecialchars($item['game_image']);
       ?>
-      <div class="listing-card"
+      <?php $isSold = ($item['listing_status'] === 'sold'); ?>
+      <div class="listing-card<?php echo $isSold ? ' listing-card--sold' : ''; ?>"
            onclick="window.location.href='listing-detail.php?id=<?php echo (int)$item['id']; ?>'">
 
         <!-- Thumbnail -->
-        <img
-          class="listing-card-img"
-          src="../<?php echo $imgSrc; ?>"
-          alt="<?php echo htmlspecialchars($item['title']); ?>"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        />
-        <div class="listing-card-img-placeholder" style="display:none;">🎮</div>
+        <div class="listing-card-img-wrap">
+          <img
+            class="listing-card-img"
+            src="../<?php echo $imgSrc; ?>"
+            alt="<?php echo htmlspecialchars($item['title']); ?>"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          />
+          <div class="listing-card-img-placeholder" style="display:none;">🎮</div>
+          <?php if ($isSold): ?>
+            <div class="listing-sold-overlay">
+              <span class="listing-sold-label">TERJUAL</span>
+            </div>
+          <?php endif; ?>
+        </div>
 
         <!-- Body -->
         <div class="listing-card-body">
@@ -348,7 +356,11 @@ include '../includes/header.php';
               <div class="listing-card-game"><?php echo htmlspecialchars($item['game']); ?></div>
               <div class="listing-card-title"><?php echo htmlspecialchars($item['title']); ?></div>
             </div>
-            <span class="badge <?php echo $badge['class']; ?>"><?php echo $badge['label']; ?></span>
+            <?php if ($isSold): ?>
+              <span class="badge badge-sold">Terjual</span>
+            <?php else: ?>
+              <span class="badge <?php echo $badge['class']; ?>"><?php echo $badge['label']; ?></span>
+            <?php endif; ?>
           </div>
 
           <div class="listing-meta">
@@ -395,10 +407,16 @@ include '../includes/header.php';
         <!-- Footer -->
         <div class="listing-card-footer">
           <span class="listing-price"><?php echo formatRp($item['price']); ?></span>
-          <button class="listing-buy-btn"
-                  onclick="event.stopPropagation(); window.location.href='listing-detail.php?id=<?php echo (int)$item['id']; ?>'">
-            Lihat Detail
-          </button>
+          <?php if ($isSold): ?>
+            <button class="listing-buy-btn listing-buy-btn--sold" disabled>
+              Terjual
+            </button>
+          <?php else: ?>
+            <button class="listing-buy-btn"
+                    onclick="event.stopPropagation(); window.location.href='listing-detail.php?id=<?php echo (int)$item['id']; ?>'">
+              Lihat Detail
+            </button>
+          <?php endif; ?>
         </div>
       </div>
       <?php endforeach; ?>
