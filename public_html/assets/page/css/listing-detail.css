@@ -522,3 +522,29 @@
     flex-direction: column;
   }
 }
+
+/* ── Payment Info Box (rekening / QRIS admin) ── */
+.ld-pay-info-box {
+  background: var(--bg, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius, 10px);
+  padding: 14px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.ld-pay-info-title {
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text, #1e293b);
+}
+.ld-pay-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  gap: 12px;
+}
+.ld-pay-info-row:last-child { border-bottom: none; }
+.ld-pay-info-row span { color: var(--muted, #64748b); }
+.ld-pay-info-row strong { color: var(--text, #1e293b); font-weight: 600; }

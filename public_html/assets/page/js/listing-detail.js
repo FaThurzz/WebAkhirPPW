@@ -203,3 +203,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
+
+// ── Toggle info pembayaran sesuai metode yang dipilih ─────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const payInfoMap = {
+    'Transfer Bank': document.getElementById('payInfoBank'),
+    'E-Wallet':      document.getElementById('payInfoEwallet'),
+    'QRIS':          document.getElementById('payInfoQris'),
+  };
+
+  function showPayInfo(method) {
+    Object.entries(payInfoMap).forEach(([key, el]) => {
+      if (el) el.style.display = (key === method) ? '' : 'none';
+    });
+  }
+
+  // Set awal (Transfer Bank checked by default)
+  showPayInfo('Transfer Bank');
+
+  const payGroup = document.getElementById('paymentMethodGroup');
+  if (payGroup) {
+    payGroup.addEventListener('change', (e) => {
+      if (e.target.name === 'payment_method') showPayInfo(e.target.value);
+    });
+  }
+});

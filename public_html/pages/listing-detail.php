@@ -520,6 +520,30 @@ include '../includes/header.php';
         </div>
       </div>
 
+      <!-- ── Info Pembayaran Admin ───────────────────────────────────────── -->
+      <div class="ld-modal-divider"></div>
+      <div id="payInfoBank" class="ld-pay-info-box">
+        <div class="ld-pay-info-title">📋 Informasi Transfer Bank</div>
+        <div class="ld-pay-info-row"><span>Bank</span><strong>BCA</strong></div>
+        <div class="ld-pay-info-row"><span>No. Rekening</span><strong>1234567890</strong></div>
+        <div class="ld-pay-info-row"><span>Atas Nama</span><strong>Admin ThurzShop</strong></div>
+      </div>
+      <div id="payInfoEwallet" class="ld-pay-info-box" style="display:none">
+        <div class="ld-pay-info-title">📱 Informasi E-Wallet</div>
+        <div class="ld-pay-info-row"><span>Platform</span><strong>GoPay / OVO / Dana</strong></div>
+        <div class="ld-pay-info-row"><span>Nomor</span><strong>08123456789</strong></div>
+        <div class="ld-pay-info-row"><span>Atas Nama</span><strong>Admin ThurzShop</strong></div>
+      </div>
+      <div id="payInfoQris" class="ld-pay-info-box" style="display:none">
+        <div class="ld-pay-info-title">🔳 Scan QRIS</div>
+        <div style="text-align:center;margin-top:10px">
+          <img src="../../assets/uploads/qris_admin.png"
+               onerror="this.onerror=null;this.src='';this.parentElement.innerHTML='<div style=\'padding:30px 20px;background:var(--bg);border:2px dashed var(--border);border-radius:var(--radius);color:var(--muted);font-size:13px\'>📷 Foto QRIS belum diupload admin<br><small>Upload ke: assets/uploads/qris_admin.png</small></div>'"
+               alt="QRIS Admin" style="max-width:200px;width:100%;border-radius:var(--radius);border:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--muted);margin-top:8px">Scan dengan aplikasi pembayaran apapun</div>
+        </div>
+      </div>
+
       <div class="ld-modal-note">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span>Setelah order dibuat, upload bukti pembayaran dari <strong>Dashboard &gt; Transaksi &gt; Pembelian</strong>.</span>

@@ -174,6 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
       lst_login_type: data.loginType || '',
       lst_id: data.accountId || '',
       lst_desc: data.description || '',
+      lst_account_email: data.accountEmail || '',
+      lst_account_password: data.accountPassword || '',
+      lst_cred_notes: data.credNotes || '',
     };
 
     Object.entries(values).forEach(([id, value]) => {
@@ -281,6 +284,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (purchaseFields.payOrderId) purchaseFields.payOrderId.value = data.orderId || '';
     if (purchaseFields.payMethod) purchaseFields.payMethod.value = data.method || 'Transfer Bank';
 
+    // ── Tampilkan kredential jika status confirmed ──────────────────────
+    const credBox      = document.getElementById('purchaseCredentialBox');
+    const credEmail    = document.getElementById('purchaseCredEmail');
+    const credPassword = document.getElementById('purchaseCredPassword');
+    const credPassRaw  = document.getElementById('purchaseCredPasswordRaw');
+    const credNotes    = document.getElementById('purchaseCredNotes');
+    const credNotesRow = document.getElementById('purchaseCredNotesRow');
+    const btnToggle    = document.getElementById('btnTogglePassword');
+
+    if (credBox) {
+      if (data.status === 'confirmed' && data.accountEmail) {
+        if (credEmail)    credEmail.textContent = data.accountEmail || '-';
+        if (credPassRaw)  credPassRaw.value     = data.accountPassword || '';
+        if (credPassword) { credPassword.textContent = '••••••••'; credPassword.dataset.hidden = '1'; }
+        if (btnToggle)    btnToggle.textContent  = '🙈';
+        if (credNotesRow) credNotesRow.style.display = data.credNotes ? '' : 'none';
+        if (credNotes)    credNotes.textContent   = data.credNotes || '';
+        credBox.style.display = '';
+      } else {
+        credBox.style.display = 'none';
+      }
+    }
+
     if (paymentProofInput) paymentProofInput.value = '';
 
     if (purchaseProofLink) {
@@ -303,7 +329,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.querySelectorAll('.db-purchase-detail-btn').forEach(btn => {
-    btn.addEventListener('click', () => openPurchaseModal(btn.dataset));
+    btn.addEventListener('click', () => openPurchaseModal({
+      ...btn.dataset,
+      accountEmail:    btn.dataset.accountEmail    || '',
+      accountPassword: btn.dataset.accountPassword || '',
+      credNotes:       btn.dataset.credNotes       || '',
+    }));
   });
 
   if (btnClosePurchaseModal) btnClosePurchaseModal.addEventListener('click', closePurchaseModal);

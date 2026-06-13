@@ -1,6 +1,32 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-$base_url = '/ProjectAkhir/public_html/'; 
+
+/**
+ * Hitung base_url secara dinamis.
+ * __DIR__ = .../<project-folder>/includes
+ * dirname(__DIR__) = .../<project-folder>  → root project (folder public_html)
+ * Path ini dikurangi DOCUMENT_ROOT server, hasilnya jadi base_url relatif
+ * (misal "/ProjectAkhir/public_html/" atau "/" kalau project di root domain).
+ */
+$projectRoot = dirname(__DIR__);
+$docRoot     = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/\\');
+
+// Samakan format slash (Windows pakai backslash)
+$projectRootNorm = str_replace('\\', '/', $projectRoot);
+$docRootNorm     = str_replace('\\', '/', $docRoot);
+
+if ($docRootNorm !== '' && strpos($projectRootNorm, $docRootNorm) === 0) {
+    $base_url = substr($projectRootNorm, strlen($docRootNorm));
+} else {
+    // Fallback: tebak dari SCRIPT_NAME jika DOCUMENT_ROOT tidak cocok
+    $base_url = dirname($_SERVER['SCRIPT_NAME']);
+    // Buang segmen folder request saat ini (pages, pages/admin, dst) jika header.php
+    // dipanggil dari sub-folder — cukup pakai bagian sebelum '/pages' atau akhir path.
+}
+
+$base_url = '/' . trim($base_url, '/');
+$base_url = ($base_url === '/') ? '/' : $base_url . '/';
+
 $is_logged_in = isset($_SESSION['user']);
 $is_admin = $is_logged_in && ($_SESSION['user']['role'] ?? '') === 'admin';
 $profile_url = $is_logged_in
@@ -261,10 +287,6 @@ $profile_url = $is_logged_in
             <a href="<?php echo $profile_url; ?>" class="nav-dropdown-item" role="menuitem">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Profil Saya
-            </a>
-            <a href="#" class="nav-dropdown-item" role="menuitem">
-              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>
-              Transaksi Saya
             </a>
             <hr class="nav-dropdown-divider" />
             <a href="<?php echo $base_url; ?>pages/logout.php" class="nav-dropdown-item nav-dropdown-item--danger" role="menuitem">

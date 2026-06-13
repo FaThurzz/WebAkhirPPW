@@ -25,6 +25,9 @@ $server     = trim($_POST['server'] ?? '') ?: null;
 $account_login_type = trim($_POST['account_login_type'] ?? '') ?: null;
 $id_akun    = trim($_POST['id'] ?? '') ?: null;
 $description = trim($_POST['description'] ?? '');
+$account_email    = trim($_POST['account_email'] ?? '');
+$account_password = trim($_POST['account_password'] ?? '');
+$cred_notes       = trim($_POST['cred_notes'] ?? '') ?: null;
 
 // Validasi
 $errors = [];
@@ -33,6 +36,8 @@ if (empty($title))        $errors[] = 'Judul listing wajib diisi.';
 if (strlen($title) > 150) $errors[] = 'Judul maksimal 150 karakter.';
 if ($game_id <= 0)        $errors[] = 'Pilih game terlebih dahulu.';
 if ($price < 1000)        $errors[] = 'Harga minimal Rp 1.000.';
+if (empty($account_email))    $errors[] = 'Email akun wajib diisi.';
+if (empty($account_password)) $errors[] = 'Password akun wajib diisi.';
 
 if ($errors) {
     echo json_encode(['success' => false, 'message' => implode(' ', $errors)]);
@@ -107,8 +112,23 @@ mysqli_stmt_bind_param($stmt, 'isssssdissii',
     $listing_id, $user_id);
 
 if (mysqli_stmt_execute($stmt)) {
+    mysqli_stmt_close($stmt);
+
+    // ── Upsert kredential akun ──────────────────────────────────────────
+    $credStmt = mysqli_prepare($conn,
+        "INSERT INTO account_credentials (listing_id, account_email, account_password, notes)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           account_email    = VALUES(account_email),
+           account_password = VALUES(account_password),
+           notes            = VALUES(notes)"
+    );
+    mysqli_stmt_bind_param($credStmt, 'isss', $listing_id, $account_email, $account_password, $cred_notes);
+    mysqli_stmt_execute($credStmt);
+    mysqli_stmt_close($credStmt);
+
     echo json_encode(['success' => true, 'message' => 'Listing berhasil diperbarui!']);
 } else {
+    mysqli_stmt_close($stmt);
     echo json_encode(['success' => false, 'message' => 'Gagal memperbarui listing.']);
 }
-mysqli_stmt_close($stmt);

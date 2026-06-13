@@ -28,7 +28,10 @@ $level              = !empty($_POST['level']) ? (int) $_POST['level'] : null;
 $rank               = trim($_POST['rank'] ?? '') ?: null;
 $account_login_type = trim($_POST['account_login_type'] ?? '') ?: null;
 $id_akun            = trim($_POST['id'] ?? '') ?: null;
-$server = trim($_POST['server'] ?? '') ?: null;
+$server             = trim($_POST['server'] ?? '') ?: null;
+$account_email      = trim($_POST['account_email'] ?? '');
+$account_password   = trim($_POST['account_password'] ?? '');
+$cred_notes         = trim($_POST['cred_notes'] ?? '') ?: null;
 
 // ── Validasi field teks ───────────────────────────────────────────────────────
 $errors = [];
@@ -37,6 +40,8 @@ if (empty($title))       $errors[] = 'Judul listing wajib diisi.';
 if (strlen($title) > 150) $errors[] = 'Judul maksimal 150 karakter.';
 if ($game_id <= 0)       $errors[] = 'Pilih game terlebih dahulu.';
 if ($price < 1000)       $errors[] = 'Harga minimal Rp 1.000.';
+if (empty($account_email))    $errors[] = 'Email akun wajib diisi.';
+if (empty($account_password)) $errors[] = 'Password akun wajib diisi.';
 
 if (!empty($errors)) {
     echo json_encode(['success' => false, 'message' => implode(' ', $errors)]);
@@ -147,6 +152,15 @@ if (mysqli_stmt_execute($stmt)) {
     mysqli_stmt_bind_param($upd, 'i', $game_id);
     mysqli_stmt_execute($upd);
     mysqli_stmt_close($upd);
+
+    // ── Simpan kredential akun ──────────────────────────────────────────────
+    $credStmt = mysqli_prepare($conn,
+        "INSERT INTO account_credentials (listing_id, account_email, account_password, notes)
+         VALUES (?, ?, ?, ?)"
+    );
+    mysqli_stmt_bind_param($credStmt, 'isss', $new_id, $account_email, $account_password, $cred_notes);
+    mysqli_stmt_execute($credStmt);
+    mysqli_stmt_close($credStmt);
 
     echo json_encode([
         'success'    => true,

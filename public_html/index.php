@@ -60,6 +60,35 @@ if ($hour >= 5 && $hour < 12) {
     include 'includes/db.php';
     /** @var mysqli $conn */
     $games = mysqli_query($conn, "SELECT * FROM games ORDER BY listing_count DESC");
+
+    // Hot Deals: ambil listing termahal yang masih 'ready' dari view v_listing_marketplace
+    $hotDealsRes = mysqli_query($conn,
+        "SELECT * FROM v_listing_marketplace
+         WHERE status = 'ready'
+         ORDER BY price DESC
+         LIMIT 3");
+    $hotDeals = $hotDealsRes ? mysqli_fetch_all($hotDealsRes, MYSQLI_ASSOC) : [];
+
+    function dealEmoji($gameName) {
+        $map = [
+            'valorant'        => '🎯',
+            'mobile legends'  => '⚔️',
+            'free fire'       => '🔥',
+            'pubg'            => '🎮',
+            'genshin'         => '⚔️',
+            'star rail'       => '🚄',
+            'wuthering waves' => '🌊',
+        ];
+        $key = strtolower($gameName);
+        foreach ($map as $k => $v) {
+            if (strpos($key, $k) !== false) return $v;
+        }
+        return '🎮';
+    }
+
+    function dealRp($n) {
+        return 'Rp ' . number_format((float) $n, 0, ',', '.');
+    }
 ?>
 
 <div style="background: var(--white);">
@@ -102,11 +131,27 @@ if ($hour >= 5 && $hour < 12) {
         <div class="section-sub">Limited-time offers — grab them before they're gone</div>
       </div>
     </div>
+    <?php if (empty($hotDeals)): ?>
+      <div class="empty-state" style="padding: 40px 0;">
+        <div class="empty-icon">🛒</div>
+        <h3>Belum ada listing tersedia</h3>
+        <p>Cek lagi nanti, listing baru akan tampil di sini.</p>
+      </div>
+    <?php else: ?>
     <div class="deals-grid">
       <!-- Featured deal -->
-      <div class="deal-featured">
-        <div class="deal-featured-img">
-          <svg width="310" height="200" viewBox="0 0 310 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <?php $featured = $hotDeals[0]; ?>
+      <a href="pages/listing-detail.php?id=<?php echo (int) $featured['listing_id']; ?>"
+         class="deal-featured" style="text-decoration:none; color: inherit;">
+        <div class="deal-featured-img" style="position:absolute; inset:0; width:100%; height:100%;">
+          <?php if (!empty($featured['image_url'])): ?>
+            <img src="<?php echo htmlspecialchars($featured['image_url']); ?>"
+                 alt="<?php echo htmlspecialchars($featured['title']); ?>"
+                 style="width:100%; height:100%; object-fit:cover;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <?php endif; ?>
+          <svg width="100%" height="100%" viewBox="0 0 310 200" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg"
+               <?php echo !empty($featured['image_url']) ? 'style="display:none"' : ''; ?>>
             <rect width="310" height="200" fill="#0a1628"/>
             <rect width="310" height="200" fill="url(#dealGlow)"/>
             <defs>
@@ -126,57 +171,56 @@ if ($hour >= 5 && $hour < 12) {
           </svg>
         </div>
         <div class="deal-featured-content">
-          <div class="deal-tag">Exclusive Deal</div>
-          <div class="deal-featured-title">Valorant Ascendant Account<br/>All Agents Unlocked</div>
+          <div class="deal-tag"><?php echo htmlspecialchars($featured['game_name']); ?></div>
+          <div class="deal-featured-title">
+            <?php echo htmlspecialchars($featured['title']); ?>
+            <?php if (!empty($featured['rank']) && $featured['rank'] !== '-'): ?>
+              <br/><span style="font-size:13px; opacity:.8;">⭐ <?php echo htmlspecialchars($featured['rank']); ?></span>
+            <?php endif; ?>
+          </div>
           <div class="deal-price">
-            <span class="deal-price-main">Rp 1.299.000</span>
-            <span class="deal-price-old">Rp 1.999.000</span>
+            <span class="deal-price-main"><?php echo dealRp($featured['price']); ?></span>
           </div>
         </div>
-      </div>
+      </a>
 
       <!-- Side deals -->
       <div class="deal-list">
-        <div class="deal-card">
-          <div class="deal-card-top">
-            <div class="deal-card-icon">⚔️</div>
-            <span class="badge-verified">Verified</span>
-          </div>
-          <div>
-            <div class="deal-card-title">Mobile Legends Epic</div>
-            <div class="deal-card-sub">Winrate 68%, 15 Exclusive Skins</div>
-          </div>
-          <div class="deal-card-bottom">
-            <span class="deal-card-price">Rp 450.000</span>
-            <a href="pages/marketplace.php" class="deal-link">
-              Details
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path d="M7 17 17 7M7 7h10v10"/>
-              </svg>
-            </a>
-          </div>
-        </div>
-        <div class="deal-card">
-          <div class="deal-card-top">
-            <div class="deal-card-icon">🎮</div>
-            <span class="badge-hot">Hot</span>
-          </div>
-          <div>
-            <div class="deal-card-title">PUBG Mobile Conqueror</div>
-            <div class="deal-card-sub">Season 12 Frame, Full Sets</div>
-          </div>
-          <div class="deal-card-bottom">
-            <span class="deal-card-price">Rp 895.000</span>
-            <a href="pages/marketplace.php" class="deal-link">
-              Details
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path d="M7 17 17 7M7 7h10v10"/>
-              </svg>
-            </a>
-          </div>
-        </div>
+        <?php for ($i = 1; $i <= 2; $i++): ?>
+          <?php if (isset($hotDeals[$i])): $d = $hotDeals[$i]; ?>
+            <div class="deal-card">
+              <div class="deal-card-top">
+                <div class="deal-card-icon"><?php echo dealEmoji($d['game_name']); ?></div>
+                <?php if ($d['seller_status'] === 'active'): ?>
+                  <span class="badge-verified">Verified</span>
+                <?php else: ?>
+                  <span class="badge-hot">Hot</span>
+                <?php endif; ?>
+              </div>
+              <div>
+                <div class="deal-card-title"><?php echo htmlspecialchars($d['title']); ?></div>
+                <div class="deal-card-sub">
+                  <?php echo htmlspecialchars($d['game_name']); ?><?php
+                    if (!empty($d['rank']) && $d['rank'] !== '-') echo ' · ' . htmlspecialchars($d['rank']);
+                    if (!empty($d['level'])) echo ' · Lv. ' . (int) $d['level'];
+                  ?>
+                </div>
+              </div>
+              <div class="deal-card-bottom">
+                <span class="deal-card-price"><?php echo dealRp($d['price']); ?></span>
+                <a href="pages/listing-detail.php?id=<?php echo (int) $d['listing_id']; ?>" class="deal-link">
+                  Details
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M7 17 17 7M7 7h10v10"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          <?php endif; ?>
+        <?php endfor; ?>
       </div>
     </div>
+    <?php endif; ?>
   </div>
 </div>
 

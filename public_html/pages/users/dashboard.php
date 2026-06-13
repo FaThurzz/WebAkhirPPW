@@ -60,9 +60,11 @@ mysqli_stmt_close($belanjaStmt);
 
 // ── Listing milik user ───────────────────────────────────────────────────
 $lStmt = mysqli_prepare($conn,
-    "SELECT al.*, g.name AS game_name
+    "SELECT al.*, g.name AS game_name,
+            ac.account_email, ac.account_password, ac.notes AS cred_notes
      FROM account_listing al
      JOIN games g ON al.game_id = g.id
+     LEFT JOIN account_credentials ac ON ac.listing_id = al.listing_id
      WHERE al.user_id = ? ORDER BY al.created_at DESC");
 mysqli_stmt_bind_param($lStmt, 'i', $user_id);
 mysqli_stmt_execute($lStmt);
@@ -91,9 +93,11 @@ $buyOrdStmt = mysqli_prepare($conn,
             v.order_status, v.order_created_at AS created_at,
             v.listing_title AS title, v.game_name,
             v.seller_username AS seller_name,
-            v.payment_method, v.payment_status, v.payment_proof, v.paid_at
+            v.payment_method, v.payment_status, v.payment_proof, v.paid_at,
+            ac.account_email, ac.account_password, ac.notes AS cred_notes
      FROM v_order_detail v
      LEFT JOIN account_listing al ON al.listing_id = v.listing_id
+     LEFT JOIN account_credentials ac ON ac.listing_id = v.listing_id
      WHERE v.buyer_id = ? ORDER BY v.order_created_at DESC");
 mysqli_stmt_bind_param($buyOrdStmt, 'i', $user_id);
 mysqli_stmt_execute($buyOrdStmt);
@@ -310,7 +314,10 @@ include '../../includes/header.php';
               data-paid="<?php echo $paidAt; ?>"
               data-total="<?php echo formatRp($ord['total_price']); ?>"
               data-image="<?php echo $imgSrc; ?>"
-              data-proof-url="<?php echo $proofUrl; ?>">Detail</button>
+              data-proof-url="<?php echo $proofUrl; ?>"
+              data-account-email="<?php echo ($ord['order_status']==='confirmed') ? htmlspecialchars($ord['account_email']??'',ENT_QUOTES) : ''; ?>"
+              data-account-password="<?php echo ($ord['order_status']==='confirmed') ? htmlspecialchars($ord['account_password']??'',ENT_QUOTES) : ''; ?>"
+              data-cred-notes="<?php echo ($ord['order_status']==='confirmed') ? htmlspecialchars($ord['cred_notes']??'',ENT_QUOTES) : ''; ?>">Detail</button>
           </div>
           <?php endforeach; ?>
         </div>
@@ -364,7 +371,10 @@ include '../../includes/header.php';
             data-login-type="<?php echo htmlspecialchars($lst['account_login_type']??'',ENT_QUOTES); ?>"
             data-account-id="<?php echo htmlspecialchars($lst['id']??'',ENT_QUOTES); ?>"
             data-description="<?php echo htmlspecialchars($lst['description']??'',ENT_QUOTES); ?>"
-            data-image-url="<?php echo $imgSrc; ?>">
+            data-image-url="<?php echo $imgSrc; ?>"
+            data-account-email="<?php echo htmlspecialchars($lst['account_email']??'',ENT_QUOTES); ?>"
+            data-account-password="<?php echo htmlspecialchars($lst['account_password']??'',ENT_QUOTES); ?>"
+            data-cred-notes="<?php echo htmlspecialchars($lst['cred_notes']??'',ENT_QUOTES); ?>">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </button>
           <button class="btn-delete-listing" title="Hapus"
@@ -493,6 +503,23 @@ include '../../includes/header.php';
             <label for="lst_desc">Deskripsi</label>
             <textarea id="lst_desc" name="description" rows="3" placeholder="Ceritakan detail akun: skin, hero, item, dll." style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-family:Outfit,sans-serif;font-size:14px;resize:vertical;outline:none;width:100%;box-sizing:border-box;transition:border-color .2s"></textarea>
           </div>
+          <!-- ── Kredential Akun ──────────────────────────────────────────── -->
+          <div class="db-form-group full" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+            <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">🔐 Kredential Akun <span style="color:#dc2626">*</span></label>
+            <p style="font-size:12px;color:var(--muted);margin:4px 0 12px">Informasi ini hanya ditampilkan ke pembeli setelah admin mengkonfirmasi pembayaran.</p>
+          </div>
+          <div class="db-form-group">
+            <label for="lst_account_email">Email Akun <span style="color:#dc2626">*</span></label>
+            <input type="email" id="lst_account_email" name="account_email" placeholder="email@contoh.com" required>
+          </div>
+          <div class="db-form-group">
+            <label for="lst_account_password">Password Akun <span style="color:#dc2626">*</span></label>
+            <input type="text" id="lst_account_password" name="account_password" placeholder="Password akun game" required>
+          </div>
+          <div class="db-form-group full">
+            <label for="lst_cred_notes">Catatan Tambahan (opsional)</label>
+            <input type="text" id="lst_cred_notes" name="cred_notes" placeholder="Contoh: PIN: 1234, kode recovery: ABCD">
+          </div>
           <div class="db-form-group full">
             <label id="lstImageRequired">Foto Akun <span style="color:#dc2626">*</span></label>
             <div class="lst-image-dropzone" id="lstImageDropzone"
@@ -543,6 +570,29 @@ include '../../includes/header.php';
         <div class="db-detail-row"><span>Tanggal Order</span><strong id="purchaseModalCreated"></strong></div>
         <div class="db-detail-row"><span>Tanggal Bayar</span><strong id="purchaseModalPaid"></strong></div>
         <div class="db-detail-row db-detail-row--total"><span>Total Pembayaran</span><strong id="purchaseModalTotal"></strong></div>
+      </div>
+      <!-- ── Kredential Akun (hanya muncul jika confirmed) ────────────────── -->
+      <div id="purchaseCredentialBox" style="display:none;margin-top:14px;border:1.5px solid #16a34a;border-radius:var(--radius);padding:14px 16px;background:#f0fdf4;">
+        <div style="font-weight:700;color:#15803d;margin-bottom:10px;font-size:13px">🔐 Kredential Akun</div>
+        <div style="display:grid;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span style="color:#64748b">Email</span>
+            <strong id="purchaseCredEmail" style="color:#1e293b;word-break:break-all"></strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span style="color:#64748b">Password</span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <strong id="purchaseCredPassword" style="color:#1e293b;letter-spacing:.5px"></strong>
+              <button id="btnTogglePassword" onclick="(function(){var el=document.getElementById('purchaseCredPasswordRaw');var hidden=document.getElementById('purchaseCredPassword');var isHidden=hidden.dataset.hidden==='1';hidden.textContent=isHidden?el.value:'••••••••';hidden.dataset.hidden=isHidden?'0':'1';document.getElementById('btnTogglePassword').textContent=isHidden?'👁️':'🙈';})()" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0" title="Toggle tampilkan password">🙈</button>
+              <input type="hidden" id="purchaseCredPasswordRaw">
+            </span>
+          </div>
+          <div id="purchaseCredNotesRow" style="display:none;border-top:1px solid #bbf7d0;padding-top:8px">
+            <span style="color:#64748b">Catatan</span><br>
+            <strong id="purchaseCredNotes" style="color:#1e293b"></strong>
+          </div>
+        </div>
+        <button onclick="(function(){var text='Email: '+document.getElementById('purchaseCredEmail').textContent+'\nPassword: '+document.getElementById('purchaseCredPasswordRaw').value+(document.getElementById('purchaseCredNotesRow').style.display!=='none'?'\nCatatan: '+document.getElementById('purchaseCredNotes').textContent:'');navigator.clipboard.writeText(text).then(function(){window.showToast&&window.showToast('Kredential disalin!','success');});})()" style="margin-top:12px;width:100%;padding:8px;border:1px solid #16a34a;border-radius:var(--radius);background:white;color:#15803d;font-weight:600;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif">📋 Salin Kredential</button>
       </div>
       <div class="db-status-note" id="purchaseModalNote"></div>
       <a id="purchaseModalProofLink" href="#" target="_blank" class="db-proof-link" style="display:none">
