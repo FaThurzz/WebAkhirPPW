@@ -1,6 +1,21 @@
 <?php
 $currentYear = date("Y");
+$projectRoot = dirname(__DIR__);
+$docRoot     = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/\\');
+
+$projectRootNorm = str_replace('\\', '/', $projectRoot);
+$docRootNorm     = str_replace('\\', '/', $docRoot);
+
+if ($docRootNorm !== '' && strpos($projectRootNorm, $docRootNorm) === 0) {
+    $base_url = substr($projectRootNorm, strlen($docRootNorm));
+} else {
+    $base_url = dirname($_SERVER['SCRIPT_NAME']);
+}
+
+$base_url = '/' . trim($base_url, '/');
+$base_url = ($base_url === '/') ? '/' : $base_url . '/';
 ?>
+
 
 <footer>
   <div class="footer-inner">

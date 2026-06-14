@@ -1,27 +1,17 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-/**
- * Hitung base_url secara dinamis.
- * __DIR__ = .../<project-folder>/includes
- * dirname(__DIR__) = .../<project-folder>  → root project (folder public_html)
- * Path ini dikurangi DOCUMENT_ROOT server, hasilnya jadi base_url relatif
- * (misal "/ProjectAkhir/public_html/" atau "/" kalau project di root domain).
- */
+
 $projectRoot = dirname(__DIR__);
 $docRoot     = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/\\');
 
-// Samakan format slash (Windows pakai backslash)
 $projectRootNorm = str_replace('\\', '/', $projectRoot);
 $docRootNorm     = str_replace('\\', '/', $docRoot);
 
 if ($docRootNorm !== '' && strpos($projectRootNorm, $docRootNorm) === 0) {
     $base_url = substr($projectRootNorm, strlen($docRootNorm));
 } else {
-    // Fallback: tebak dari SCRIPT_NAME jika DOCUMENT_ROOT tidak cocok
     $base_url = dirname($_SERVER['SCRIPT_NAME']);
-    // Buang segmen folder request saat ini (pages, pages/admin, dst) jika header.php
-    // dipanggil dari sub-folder — cukup pakai bagian sebelum '/pages' atau akhir path.
 }
 
 $base_url = '/' . trim($base_url, '/');
