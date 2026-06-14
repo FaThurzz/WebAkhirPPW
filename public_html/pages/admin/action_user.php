@@ -26,6 +26,15 @@ if ($id === (int) $_SESSION['user']['ID_User'] && in_array($action, ['ban', 'del
     exit;
 }
 
+// Prevent banning or deleting other admins
+if (in_array($action, ['ban', 'delete'])) {
+    $target = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role FROM users WHERE ID_User=$id"));
+    if ($target && $target['role'] === 'admin') {
+        echo json_encode(['success' => false, 'message' => 'Tidak bisa melakukan aksi pada akun admin lain.']);
+        exit;
+    }
+}
+
 switch ($action) {
     case 'ban':
         $stmt = mysqli_prepare($conn, "UPDATE users SET status='banned' WHERE ID_User=?");
@@ -42,12 +51,6 @@ switch ($action) {
         break;
 
     case 'delete':
-        // Check role, do not delete admins
-        $chk = mysqli_fetch_assoc(mysqli_query($conn, "SELECT role FROM users WHERE ID_User=$id"));
-        if (!$chk || $chk['role'] === 'admin') {
-            echo json_encode(['success' => false, 'message' => 'Tidak bisa menghapus admin.']);
-            exit;
-        }
         $stmt = mysqli_prepare($conn, "DELETE FROM users WHERE ID_User=?");
         mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);

@@ -25,16 +25,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
 
         if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user'] = [
-                'ID_User'  => $user['ID_User'],
-                'username' => $user['username'],
-                'email'    => $user['email'],
-                'role'     => $user['role'] ?? 'user',
-            ];
-            header(($_SESSION['user']['role'] === 'admin')
-                ? 'Location: admin/dashboard.php'
-                : 'Location: ../index.php');
-            exit;
+            // Cek status banned sebelum membuat session
+            if (isset($user['status']) && $user['status'] === 'banned') {
+                $error = 'Akun kamu telah diblokir. Hubungi admin untuk informasi lebih lanjut.';
+            } else {
+                $_SESSION['user'] = [
+                    'ID_User'  => $user['ID_User'],
+                    'username' => $user['username'],
+                    'email'    => $user['email'],
+                    'role'     => $user['role'] ?? 'user',
+                ];
+                header(($_SESSION['user']['role'] === 'admin')
+                    ? 'Location: admin/dashboard.php'
+                    : 'Location: ../index.php');
+                exit;
+            }
         } else {
             $error = 'Username atau password salah.';
         }
