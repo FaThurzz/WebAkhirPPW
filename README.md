@@ -29,7 +29,7 @@
 
 | Homepage | Marketplace | Dashboard User |
 |:---:|:---:|:---:|
-| ![Home](https://placehold.co/280x160/1a56db/ffffff?text=Homepage) | ![Market](https://placehold.co/280x160/059669/ffffff?text=Marketplace) | ![Dashboard](https://placehold.co/280x160/7c3aed/ffffff?text=Dashboard) |
+| ![Home](Home.png) | ![Market](https://placehold.co/280x160/059669/ffffff?text=Marketplace) | ![Dashboard](https://placehold.co/280x160/7c3aed/ffffff?text=Dashboard) |
 
 | Detail Listing | Admin Panel | Order & Payment |
 |:---:|:---:|:---:|
