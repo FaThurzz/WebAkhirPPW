@@ -67,24 +67,6 @@
 
 ---
 
-## 🎮 Game yang Didukung
-
-<div align="center">
-
-| Game | Genre | Platform | Listing |
-|:---:|:---:|:---:|:---:|
-| 🎯 Valorant | Tactical Shooter | PC | 1.200+ |
-| ⚔️ Mobile Legends | MOBA | Mobile | 3.400+ |
-| 🔥 Free Fire Max | Battle Royale | Mobile | 2.100+ |
-| 🎮 PUBG Mobile | Battle Royale | Mobile | 1.800+ |
-| ✨ Genshin Impact | RPG | PC/Mobile | 980+ |
-| 🚄 Honkai: Star Rail | Turn-based RPG | PC/Mobile | 760+ |
-| 🌊 Wuthering Waves | RPG | PC/Mobile | 800+ |
-
-</div>
-
----
-
 ## 🗂️ Struktur Proyek
 
 ```
