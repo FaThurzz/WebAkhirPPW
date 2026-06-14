@@ -1,7 +1,4 @@
 <div align="center">
-
-<img src="https://readme-typing-svg.demolab.com?font=Rowdies&size=40&duration=3000&pause=1000&color=1A56DB&center=true&vCenter=true&width=600&lines=🎮+ThurzShop;Game+Account+Marketplace;Safe+%26+Secure+Trading" alt="ThurzShop" />
-
 <br/>
 
 [![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
@@ -12,11 +9,11 @@
 <br/>
 
 > **ThurzShop** adalah marketplace berbasis web untuk jual beli akun game secara **aman**, **cepat**, dan **terpercaya**.  
-> Dibangun dengan PHP native, MySQL, dan CSS murni — tanpa framework.
+> Dibangun dengan PHP native, MySQL, Java Script, dan CSS.
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_Site-1A56DB?style=for-the-badge)](https://yourdomain.com)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_Site-1A56DB?style=for-the-badge)](https://fathurz-shop.trpl25.com)
 [![Video Demo](https://img.shields.io/badge/▶️_Video_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube)](https://youtube.com)
 
 </div>
