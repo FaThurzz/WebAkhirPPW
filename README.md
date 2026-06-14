@@ -29,13 +29,11 @@
 
 | Homepage | Marketplace | Dashboard User |
 |:---:|:---:|:---:|
-| ![Home](Home.png) | ![Market](https://placehold.co/280x160/059669/ffffff?text=Marketplace) | ![Dashboard](https://placehold.co/280x160/7c3aed/ffffff?text=Dashboard) |
+| ![Home](photo/Home.png) | ![Market](photo/Market.png) | ![Dashboard](photo/Dashboard.png) |
 
 | Detail Listing | Admin Panel | Order & Payment |
 |:---:|:---:|:---:|
-| ![Detail](https://placehold.co/280x160/dc2626/ffffff?text=Listing+Detail) | ![Admin](https://placehold.co/280x160/d97706/ffffff?text=Admin+Panel) | ![Order](https://placehold.co/280x160/0891b2/ffffff?text=Order+%26+Bayar) |
-
-> 💡 *Ganti gambar placeholder di atas dengan screenshot asli websitemu*
+| ![Detail](photo/Detail.png) | ![Admin](photo/Admin.png) | ![Order](photo/Order.png) |
 
 </div>
 
@@ -257,11 +255,11 @@ Penjual                    Sistem                    Pembeli
 
 | | |
 |:---:|:---|
-| **Nama** | [NAMA LENGKAP] |
-| **NIM** | [NIM] |
-| **Prodi** | [NAMA PRODI] |
-| **Mata Kuliah** | Pemrograman Web |
-| **Institusi** | [NAMA KAMPUS] |
+| **Nama** | Faturrohim Agni Darma |
+| **NIM** | 25/556330/SV/25913 |
+| **Prodi** | [Teknologi Rekayasa Perangkat Lunak] |
+| **Mata Kuliah** | Praktikum Pemrograman Web 1 |
+| **Institusi** | Universitas Gadjah Mada |
 
 <br/>
 
@@ -284,6 +282,6 @@ Bebas digunakan sebagai referensi pembelajaran. ✌️
 
 <br/>
 
-*Made with ❤️ and ☕ by [NAMA LENGKAP]*
+*Made with ❤️ and ☕ by Thurz*
 
 </div>
