@@ -13,7 +13,7 @@
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_Site-1A56DB?style=for-the-badge)](fathurz-shop.trpl25.com)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_Site-1A56DB?style=for-the-badge)](https://fathurz-shop.trpl25.com)
 [![Video Demo](https://img.shields.io/badge/▶️_Video_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube)](https://youtube.com)
 
 </div>
